@@ -14,7 +14,7 @@ services:
     build:
       context: .
     ports:
-      - "2000:2000"
+      - "4321:2000"
 
   proxy:
     image: envoyproxy/envoy:v1.21-latest

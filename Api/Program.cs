@@ -1,4 +1,5 @@
 using System.Net;
+using Api.Data;
 using Api.Services;
 using Microsoft.AspNetCore.Server.Kestrel.Core;
 
@@ -10,6 +11,8 @@ builder.WebHost.ConfigureKestrel(options =>
 });
 
 builder.Services.AddGrpc();
+
+builder.Services.AddDbContext<MainDb>();
 
 var app = builder.Build();
 

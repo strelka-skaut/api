@@ -1,15 +1,28 @@
 syntax = "proto3";
 
+import "google/protobuf/timestamp.proto";
+
 option csharp_namespace = "Api";
 
 package main;
 
 service PageService {
+  rpc CreatePage (PageServiceCreatePageRequest) returns (PageServiceCreatePageResponse);
   rpc GetPage (PageServiceGetPageRequest) returns (PageServiceGetPageResponse);
 }
 
+message PageServiceCreatePageRequest {
+  string name = 1;
+  string content = 2;
+  Uuid site_id = 3;
+}
+
+message PageServiceCreatePageResponse {
+  Uuid id = 1;
+}
+
 message PageServiceGetPageRequest {
-  int32 page_id = 1;
+  Uuid page_id = 1;
 }
 
 message PageServiceGetPageResponse {
@@ -17,9 +30,36 @@ message PageServiceGetPageResponse {
 }
 
 message Page {
-  int32 id = 1;
-  string title = 2;
+  Uuid id = 1;
+  string name = 2;
   string content = 3;
-  string author_id = 4;
-  int64 created_at = 5;
+  google.protobuf.Timestamp updated_at = 4;
+  Uuid updated_user_id = 5;
+  optional Uuid site_id = 6;
 }
+
+message Uuid {
+  string value = 1;
+}
+
+//message PageServiceGetPagesRequest {
+//  // todo filter = 1;
+//  repeated Sort sort = 2;
+//
+//  int32 offset = 3;
+//  int32 limit = 4;
+//}
+
+//message PageServiceGetPagesResponse {
+//  repeated Page pages = 1;
+//}
+
+//message Sort {
+//  string field = 1;
+//  Order order = 2;
+//
+//  enum Order {
+//    ASC = 0;
+//    DESC = 1;
+//  }
+//}
