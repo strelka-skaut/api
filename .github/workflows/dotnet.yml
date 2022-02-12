@@ -15,8 +15,9 @@ jobs:
       - run: dotnet nuget add source --configfile nuget.config --username "${{ github.actor }}" --password "${{ secrets.GITHUB_TOKEN }}" --store-password-in-clear-text --name github "https://nuget.pkg.github.com/strelka-skaut/index.json"
       - run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login -u "${{ github.actor }}" --password-stdin ghcr.io
       - run: |
-          IMAGE_TAG="$(echo "${{ github.sha }}" | cut -c -8)"
-          IMAGE_NAME="ghcr.io/${{ github.repository }}:$IMAGE_TAG"
+          SHORT_COMMIT_SHA="$(echo "${{ github.sha }}" | cut -c -8)"
+          IMAGE_NAME="ghcr.io/${{ github.repository }}"
           
-          docker build -t "$IMAGE_NAME" -f Dockerfile .
-          docker push "$IMAGE_NAME"
+          docker build -t "$IMAGE_NAME:$SHORT_COMMIT_SHA" -f Dockerfile .
+          docker push "$IMAGE_NAME:$SHORT_COMMIT_SHA"
+          docker tag "$IMAGE_NAME:$SHORT_COMMIT_SHA" "$IMAGE_NAME:latest"
