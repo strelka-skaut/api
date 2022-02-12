@@ -9,7 +9,7 @@ public class DriveServiceFactory
     public DriveService Create()
     {
         var credential = GoogleCredential
-            .FromFile("/home/martin/p/strelka/api/auth.json")
+            .FromFile("/home/martin/p/strelka/auth.json")
             .CreateScoped(DriveService.Scope.DriveReadonly);
 
         return new DriveService(new BaseClientService.Initializer() {
