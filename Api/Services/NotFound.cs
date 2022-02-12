@@ -1,6 +1,10 @@
+using Grpc.Core;
+
 namespace Api.Services;
 
-public class NotFound : Exception
+public class NotFound : RpcException
 {
-    
+    public NotFound(string message) : base(new Status(StatusCode.NotFound, message))
+    {
+    }
 }

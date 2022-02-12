@@ -1,6 +1,7 @@
 using Api.Data;
 using Google.Protobuf.WellKnownTypes;
 using Grpc.Core;
+using Microsoft.EntityFrameworkCore;
 
 namespace Api.Services;
 
@@ -23,12 +24,12 @@ public class PageService : Api.PageService.PageServiceBase
         ServerCallContext context
     )
     {
-        Site? site = null;
+        Guid? siteId = null;
         if (request.SiteId != null)
         {
-            site = await _db.Sites.FindAsync(request.SiteId);
-            if (site == null)
-                throw new NotFound(); // todo
+            siteId = Guid.Parse(request.SiteId.Value);
+            if (!await _db.Sites.AnyAsync(s => s.Id == siteId))
+                throw new Exception($"Site {siteId} does not exist.");
         }
 
         var id = Guid.NewGuid();
@@ -40,14 +41,14 @@ public class PageService : Api.PageService.PageServiceBase
             Content = request.Content,
             UpdatedAt = DateTime.UtcNow,
             UpdatedUserId = Guid.Empty, // todo
-            Site = site
+            SiteId = siteId
         });
 
         await _db.SaveChangesAsync();
 
         return new PageServiceCreatePageResponse
         {
-            Id = new Uuid {Value = id.ToString()}
+            Id = id.ToUuid()
         };
     }
 
@@ -56,23 +57,63 @@ public class PageService : Api.PageService.PageServiceBase
         ServerCallContext context
     )
     {
-        var dbPage = await _db.Pages.FindAsync(Guid.Parse(request.PageId.Value));
+        var id = Guid.Parse(request.PageId.Value);
+
+        var dbPage = await _db.Pages.FindAsync(id);
         if (dbPage == null)
-            throw new NotFound(); // todo
+            throw new NotFound($"Page {id} not found.");
 
         return new PageServiceGetPageResponse
         {
             Page = new Page
             {
-                Id = new Uuid {Value = dbPage.Id.ToString()},
+                Id = dbPage.Id.ToUuid(),
                 Name = dbPage.Name,
                 Content = dbPage.Content,
                 UpdatedAt = dbPage.UpdatedAt.ToTimestamp(),
-                UpdatedUserId = new Uuid {Value = dbPage.UpdatedUserId.ToString()},
-                SiteId = dbPage.Site != null
-                    ? new Uuid {Value = dbPage.Site.Id.ToString()}
-                    : null // todo dont query the Site row
+                UpdatedUserId = dbPage.UpdatedUserId.ToUuid(),
+                SiteId = dbPage.SiteId?.ToUuid()
             },
         };
+    }
+
+    public override async Task<PageServiceGetPagesResponse> GetPages(
+        PageServiceGetPagesRequest request,
+        ServerCallContext context
+    )
+    {
+        var dbPages = await _db.Pages.ToListAsync();
+
+        var resp = new PageServiceGetPagesResponse();
+        foreach (var page in dbPages)
+        {
+            resp.Pages.Add(new Page
+            {
+                Id = page.Id.ToUuid(),
+                Name = page.Name,
+                Content = page.Content,
+                UpdatedAt = page.UpdatedAt.ToTimestamp(),
+                UpdatedUserId = page.UpdatedUserId.ToUuid(),
+                SiteId = page.SiteId?.ToUuid()
+            });
+        }
+
+        return resp;
+    }
+
+    public override async Task<PageServiceDeletePageResponse> DeletePage(
+        PageServiceDeletePageRequest request,
+        ServerCallContext context
+    )
+    {
+        var id = Guid.Parse(request.PageId.Value);
+        var page = await _db.Pages.FindAsync(id);
+        if (page == null)
+            throw new NotFound($"Page {id} not found.");
+
+        _db.Remove(page);
+        await _db.SaveChangesAsync();
+
+        return new PageServiceDeletePageResponse();
     }
 }

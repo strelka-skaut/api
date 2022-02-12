@@ -11,7 +11,11 @@ public class MainDb : DbContext
 
     protected override void OnConfiguring(DbContextOptionsBuilder options)
     {
+        // options.UseNpgsql("server=db;user id=root;password=root;database=main");
         options.UseNpgsql("server=localhost;user id=root;password=root;database=main");
+        options.LogTo(Console.WriteLine);
+        options.EnableDetailedErrors();
+        options.EnableSensitiveDataLogging();
     }
 }
 
@@ -21,6 +25,7 @@ public class Site
     public Guid Id { get; set; }
     public string Name { get; set; }
     public string Slug { get; set; }
+    public Guid LayoutId { get; set; }
     public Layout Layout { get; set; }
 }
 
@@ -39,5 +44,6 @@ public class Page
     public string Content { get; set; }
     public DateTime UpdatedAt { get; set; }
     public Guid UpdatedUserId { get; set; }
+    public Guid? SiteId { get; set; }
     public Site? Site { get; set; }
 }

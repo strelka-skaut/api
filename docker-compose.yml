@@ -13,8 +13,6 @@ services:
   api:
     build:
       context: .
-    ports:
-      - "4321:2000"
 
   proxy:
     image: envoyproxy/envoy:v1.21-latest

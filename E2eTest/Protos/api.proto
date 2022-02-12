@@ -9,12 +9,14 @@ package main;
 service PageService {
   rpc CreatePage (PageServiceCreatePageRequest) returns (PageServiceCreatePageResponse);
   rpc GetPage (PageServiceGetPageRequest) returns (PageServiceGetPageResponse);
+  rpc GetPages (PageServiceGetPagesRequest) returns (PageServiceGetPagesResponse);
+  rpc DeletePage (PageServiceDeletePageRequest) returns (PageServiceDeletePageResponse);
 }
 
 message PageServiceCreatePageRequest {
   string name = 1;
   string content = 2;
-  Uuid site_id = 3;
+  optional Uuid site_id = 3;
 }
 
 message PageServiceCreatePageResponse {
@@ -27,6 +29,21 @@ message PageServiceGetPageRequest {
 
 message PageServiceGetPageResponse {
   Page page = 1;
+}
+
+message PageServiceGetPagesRequest {
+  // todo filters, paging
+}
+
+message PageServiceGetPagesResponse {
+  repeated Page pages = 1;
+}
+
+message PageServiceDeletePageRequest {
+  Uuid page_id = 1;
+}
+
+message PageServiceDeletePageResponse {
 }
 
 message Page {
