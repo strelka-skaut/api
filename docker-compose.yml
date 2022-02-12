@@ -20,8 +20,9 @@ services:
       - "5433:5432"
 
   api:
-    build:
-      context: .
+    image: ghcr.io/strelka-skaut/api:a24f2740
+    ports:
+      - "2001:2000"
 
   proxy:
     image: envoyproxy/envoy:v1.21-latest
