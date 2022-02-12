@@ -5,7 +5,7 @@ WORKDIR /app
 COPY . .
 
 RUN dotnet restore --configfile nuget.config Api
-RUN dotnet build --no-restore Api
+RUN dotnet build --no-restore -c Release Api
 RUN dotnet publish --no-build -c Release -o /app/publish Api
 
 FROM mcr.microsoft.com/dotnet/aspnet:6.0
