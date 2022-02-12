@@ -1,3 +1,5 @@
+using Api.Grpc;
+
 namespace Api;
 
 public static class MyExtensions

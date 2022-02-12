@@ -1,11 +1,13 @@
 using Api.Data;
+using Api.Grpc.Pages;
 using Google.Protobuf.WellKnownTypes;
 using Grpc.Core;
 using Microsoft.EntityFrameworkCore;
+using Page = Api.Data.Page;
 
 namespace Api.Services;
 
-public class PageService : Api.PageService.PageServiceBase
+public class PageService : Service.ServiceBase
 {
     private MainDb _db;
     private readonly ILogger<PageService> _log;
@@ -19,8 +21,8 @@ public class PageService : Api.PageService.PageServiceBase
         _log = log;
     }
 
-    public override async Task<PageServiceCreatePageResponse> CreatePage(
-        PageServiceCreatePageRequest request,
+    public override async Task<CreatePageResponse> CreatePage(
+        CreatePageRequest request,
         ServerCallContext context
     )
     {
@@ -34,7 +36,7 @@ public class PageService : Api.PageService.PageServiceBase
 
         var id = Guid.NewGuid();
 
-        _db.Pages.Add(new Data.Page
+        _db.Pages.Add(new Page
         {
             Id = id,
             Name = request.Name,
@@ -46,14 +48,14 @@ public class PageService : Api.PageService.PageServiceBase
 
         await _db.SaveChangesAsync();
 
-        return new PageServiceCreatePageResponse
+        return new CreatePageResponse
         {
             Id = id.ToUuid()
         };
     }
 
-    public override async Task<PageServiceGetPageResponse> GetPage(
-        PageServiceGetPageRequest request,
+    public override async Task<GetPageResponse> GetPage(
+        GetPageRequest request,
         ServerCallContext context
     )
     {
@@ -63,9 +65,9 @@ public class PageService : Api.PageService.PageServiceBase
         if (dbPage == null)
             throw new NotFound($"Page {id} not found.");
 
-        return new PageServiceGetPageResponse
+        return new GetPageResponse
         {
-            Page = new Page
+            Page = new Grpc.Pages.Page
             {
                 Id = dbPage.Id.ToUuid(),
                 Name = dbPage.Name,
@@ -77,17 +79,24 @@ public class PageService : Api.PageService.PageServiceBase
         };
     }
 
-    public override async Task<PageServiceGetPagesResponse> GetPages(
-        PageServiceGetPagesRequest request,
+    public override async Task<GetPagesResponse> GetPages(
+        GetPagesRequest request,
         ServerCallContext context
     )
     {
-        var dbPages = await _db.Pages.ToListAsync();
+        if (request.Limit > 1000)
+            throw new Exception("Limit cannot be greater than 1000.");
 
-        var resp = new PageServiceGetPagesResponse();
+        var dbPages = await _db.Pages
+            .Skip(request.HasOffset ? request.Offset : 0)
+            .Take(request.HasLimit ? request.Limit : 25)
+            .OrderBy(x => x.Content)
+            .ToListAsync();
+
+        var resp = new GetPagesResponse();
         foreach (var page in dbPages)
         {
-            resp.Pages.Add(new Page
+            resp.Pages.Add(new Grpc.Pages.Page
             {
                 Id = page.Id.ToUuid(),
                 Name = page.Name,
@@ -101,8 +110,8 @@ public class PageService : Api.PageService.PageServiceBase
         return resp;
     }
 
-    public override async Task<PageServiceDeletePageResponse> DeletePage(
-        PageServiceDeletePageRequest request,
+    public override async Task<DeletePageResponse> DeletePage(
+        DeletePageRequest request,
         ServerCallContext context
     )
     {
@@ -114,6 +123,6 @@ public class PageService : Api.PageService.PageServiceBase
         _db.Remove(page);
         await _db.SaveChangesAsync();
 
-        return new PageServiceDeletePageResponse();
+        return new DeletePageResponse();
     }
 }

@@ -18,7 +18,7 @@
     </ItemGroup>
 
     <ItemGroup>
-        <Protobuf Include="Protos\api.proto" />
+        <Protobuf Include="Protos/*" ProtoRoot="Protos/" />
     </ItemGroup>
 
 </Project>

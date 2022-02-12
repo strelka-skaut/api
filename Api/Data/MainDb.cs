@@ -12,7 +12,7 @@ public class MainDb : DbContext
     protected override void OnConfiguring(DbContextOptionsBuilder options)
     {
         // options.UseNpgsql("server=db;user id=root;password=root;database=main");
-        options.UseNpgsql("server=localhost;user id=root;password=root;database=main");
+        options.UseNpgsql("server=db;user id=root;password=root;database=main");
         options.LogTo(Console.WriteLine);
         options.EnableDetailedErrors();
         options.EnableSensitiveDataLogging();

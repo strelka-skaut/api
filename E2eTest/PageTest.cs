@@ -1,4 +1,5 @@
-using Api;
+using Api.Grpc;
+using Api.Grpc.Pages;
 using Grpc.Net.Client;
 using Xunit;
 
@@ -10,9 +11,9 @@ public class PageTest
     public void TestCreateAndGetAndDelete()
     {
         var channel = GrpcChannel.ForAddress("http://localhost:2000");
-        var client = new PageService.PageServiceClient(channel);
+        var client = new Service.ServiceClient(channel);
 
-        var respCreate = client.CreatePage(new PageServiceCreatePageRequest
+        var respCreate = client.CreatePage(new CreatePageRequest
         {
             Name = "Silvestr 2021",
             Content = "Sesli jsme se...",
@@ -20,7 +21,7 @@ public class PageTest
 
         Assert.NotNull(respCreate.Id);
 
-        var respGet = client.GetPage(new PageServiceGetPageRequest
+        var respGet = client.GetPage(new GetPageRequest
         {
             PageId = respCreate.Id,
         });
@@ -29,7 +30,7 @@ public class PageTest
         Assert.Equal("Silvestr 2021", respGet.Page.Name);
         Assert.Equal("Sesli jsme se...", respGet.Page.Content);
 
-        client.DeletePage(new PageServiceDeletePageRequest
+        client.DeletePage(new DeletePageRequest
         {
             PageId = respCreate.Id
         });
@@ -39,20 +40,20 @@ public class PageTest
     public void TestGetPages()
     {
         var channel = GrpcChannel.ForAddress("http://localhost:2000");
-        var client = new PageService.PageServiceClient(channel);
+        var client = new Service.ServiceClient(channel);
 
         var ids = new List<Uuid>();
-        ids.Add(client.CreatePage(new PageServiceCreatePageRequest
+        ids.Add(client.CreatePage(new CreatePageRequest
         {
             Name = "Podzimky 2021",
             Content = "Sesli jsme se...",
         }).Id);
-        ids.Add(client.CreatePage(new PageServiceCreatePageRequest
+        ids.Add(client.CreatePage(new CreatePageRequest
         {
             Name = "Silvestr 2021",
             Content = "Opet jsme se sesli...",
         }).Id);
-        ids.Add(client.CreatePage(new PageServiceCreatePageRequest
+        ids.Add(client.CreatePage(new CreatePageRequest
         {
             Name = "Brdy 2022",
             Content = "Byla zima.",
@@ -60,7 +61,7 @@ public class PageTest
 
         try
         {
-            var resp = client.GetPages(new PageServiceGetPagesRequest());
+            var resp = client.GetPages(new GetPagesRequest());
 
             Assert.Equal(3, resp.Pages.Count);
             Assert.All(resp.Pages, p => Assert.NotNull(p.Id));
@@ -75,7 +76,7 @@ public class PageTest
         {
             // todo jen truncate jednoduse
             foreach (var id in ids)
-                client.DeletePage(new PageServiceDeletePageRequest
+                client.DeletePage(new DeletePageRequest
                 {
                     PageId = id
                 });

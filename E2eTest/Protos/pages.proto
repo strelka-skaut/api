@@ -1,0 +1,61 @@
+syntax = "proto3";
+
+package pages;
+
+import "common.proto";
+import "google/protobuf/timestamp.proto";
+
+option csharp_namespace = "Api.Grpc.Pages";
+
+service Service {
+  rpc CreatePage (CreatePageRequest) returns (CreatePageResponse);
+  rpc GetPage (GetPageRequest) returns (GetPageResponse);
+  rpc GetPages (GetPagesRequest) returns (GetPagesResponse);
+  rpc DeletePage (DeletePageRequest) returns (DeletePageResponse);
+}
+
+message CreatePageRequest {
+  string name = 1;
+  string content = 2;
+  optional common.Uuid site_id = 3;
+}
+
+message CreatePageResponse {
+  common.Uuid id = 1;
+}
+
+message GetPageRequest {
+  common.Uuid page_id = 1;
+}
+
+message GetPageResponse {
+  Page page = 1;
+}
+
+message GetPagesRequest {
+  optional int32 offset = 1;
+  optional int32 limit = 2;
+
+  repeated common.Sort sort = 3;
+  // todo filters
+}
+
+message GetPagesResponse {
+  repeated Page pages = 1;
+}
+
+message DeletePageRequest {
+  common.Uuid page_id = 1;
+}
+
+message DeletePageResponse {
+}
+
+message Page {
+  common.Uuid id = 1;
+  string name = 2;
+  string content = 3;
+  google.protobuf.Timestamp updated_at = 4;
+  common.Uuid updated_user_id = 5;
+  optional common.Uuid site_id = 6;
+}
