@@ -8,6 +8,8 @@
     </PropertyGroup>
 
     <ItemGroup>
+        <PackageReference Include="CSharpApiSpec" Version="1.0.12" />
+        <PackageReference Include="Google.Apis.Drive.v3" Version="1.55.0.2566" />
         <PackageReference Include="Grpc.AspNetCore" Version="2.40.0" />
         <PackageReference Include="Microsoft.EntityFrameworkCore" Version="6.0.1" />
         <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="6.0.1">
@@ -15,11 +17,6 @@
           <PrivateAssets>all</PrivateAssets>
         </PackageReference>
         <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="6.0.3" />
-    </ItemGroup>
-
-
-    <ItemGroup>
-        <Protobuf Include="Protos/*" ProtoRoot="Protos/" GrpcServices="Server" />
     </ItemGroup>
 
 </Project>

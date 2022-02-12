@@ -1,19 +1,17 @@
-using Api.Data;
-using Api.Grpc.Pages;
+using ApiSpec.Grpc.Pages;
 using Google.Protobuf.WellKnownTypes;
 using Grpc.Core;
 using Microsoft.EntityFrameworkCore;
-using Page = Api.Data.Page;
 
 namespace Api.Services;
 
 public class PageService : Service.ServiceBase
 {
-    private MainDb _db;
+    private Data.MainDb _db;
     private readonly ILogger<PageService> _log;
 
     public PageService(
-        MainDb db,
+        Data.MainDb db,
         ILogger<PageService> log
     )
     {
@@ -36,10 +34,11 @@ public class PageService : Service.ServiceBase
 
         var id = Guid.NewGuid();
 
-        _db.Pages.Add(new Page
+        _db.Pages.Add(new Data.Page
         {
             Id = id,
             Name = request.Name,
+            Slug = request.Slug,
             Content = request.Content,
             UpdatedAt = DateTime.UtcNow,
             UpdatedUserId = Guid.Empty, // todo
@@ -67,10 +66,11 @@ public class PageService : Service.ServiceBase
 
         return new GetPageResponse
         {
-            Page = new Grpc.Pages.Page
+            Page = new Page
             {
                 Id = dbPage.Id.ToUuid(),
                 Name = dbPage.Name,
+                Slug = dbPage.Slug,
                 Content = dbPage.Content,
                 UpdatedAt = dbPage.UpdatedAt.ToTimestamp(),
                 UpdatedUserId = dbPage.UpdatedUserId.ToUuid(),
@@ -96,10 +96,11 @@ public class PageService : Service.ServiceBase
         var resp = new GetPagesResponse();
         foreach (var page in dbPages)
         {
-            resp.Pages.Add(new Grpc.Pages.Page
+            resp.Pages.Add(new Page
             {
                 Id = page.Id.ToUuid(),
                 Name = page.Name,
+                Slug = page.Slug,
                 Content = page.Content,
                 UpdatedAt = page.UpdatedAt.ToTimestamp(),
                 UpdatedUserId = page.UpdatedUserId.ToUuid(),

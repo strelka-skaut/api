@@ -7,6 +7,8 @@
     </PropertyGroup>
 
     <ItemGroup>
+        <PackageReference Include="CSharpApiClient" Version="1.0.12" />
+        <PackageReference Include="Google.Apis.Drive.v3" Version="1.55.0.2566" />
         <PackageReference Include="Google.Protobuf" Version="3.19.3" />
         <PackageReference Include="Grpc.Net.Client" Version="2.40.0" />
         <PackageReference Include="Grpc.Tools" Version="2.43.0">
@@ -15,10 +17,6 @@
         </PackageReference>
         <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.0.0" />
         <PackageReference Include="xunit" Version="2.4.1" />
-    </ItemGroup>
-
-    <ItemGroup>
-        <Protobuf Include="Protos/*" ProtoRoot="Protos/" />
     </ItemGroup>
 
 </Project>

@@ -1,4 +1,4 @@
-using Api.Grpc;
+using ApiSpec.Grpc;
 
 namespace Api;
 
