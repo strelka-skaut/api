@@ -21,8 +21,14 @@ jobs:
       - name: Restore dependencies.
         run: dotnet restore
 
+      - name: set
+        run: ASD=test
+
       - name: Build.
         run: dotnet build --no-restore
+
+      - name: env
+        run: env
 
 #      - name: Test
 #        run: dotnet test --no-build --verbosity normal
