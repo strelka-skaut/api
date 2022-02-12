@@ -22,6 +22,33 @@ namespace Api.Migrations
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
+            modelBuilder.Entity("Api.Data.Gallery", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("GdriveFolderId")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<Guid?>("SiteId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Slug")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("SiteId");
+
+                    b.ToTable("Gallery");
+                });
+
             modelBuilder.Entity("Api.Data.Layout", b =>
                 {
                     b.Property<Guid>("Id")
@@ -71,6 +98,36 @@ namespace Api.Migrations
                     b.ToTable("Page");
                 });
 
+            modelBuilder.Entity("Api.Data.Photo", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<bool>("Broken")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("Caption")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<Guid>("GalleryId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("GdriveFileId")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<int>("Order")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("GalleryId");
+
+                    b.ToTable("Photo");
+                });
+
             modelBuilder.Entity("Api.Data.Site", b =>
                 {
                     b.Property<Guid>("Id")
@@ -95,6 +152,15 @@ namespace Api.Migrations
                     b.ToTable("Site");
                 });
 
+            modelBuilder.Entity("Api.Data.Gallery", b =>
+                {
+                    b.HasOne("Api.Data.Site", "Site")
+                        .WithMany()
+                        .HasForeignKey("SiteId");
+
+                    b.Navigation("Site");
+                });
+
             modelBuilder.Entity("Api.Data.Page", b =>
                 {
                     b.HasOne("Api.Data.Site", "Site")
@@ -102,6 +168,17 @@ namespace Api.Migrations
                         .HasForeignKey("SiteId");
 
                     b.Navigation("Site");
+                });
+
+            modelBuilder.Entity("Api.Data.Photo", b =>
+                {
+                    b.HasOne("Api.Data.Gallery", "Gallery")
+                        .WithMany()
+                        .HasForeignKey("GalleryId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Gallery");
                 });
 
             modelBuilder.Entity("Api.Data.Site", b =>
