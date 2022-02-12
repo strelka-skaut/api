@@ -1,3 +1,4 @@
 .idea/
+/nuget.config
 
 /Api.sln.DotSettings.user
