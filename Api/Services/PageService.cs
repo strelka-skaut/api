@@ -88,9 +88,9 @@ public class PageService : Service.ServiceBase
             throw new Exception("Limit cannot be greater than 1000.");
 
         var dbPages = await _db.Pages
+            .OrderBy(x => x.Content)
             .Skip(request.HasOffset ? request.Offset : 0)
             .Take(request.HasLimit ? request.Limit : 25)
-            .OrderBy(x => x.Content)
             .ToListAsync();
 
         var resp = new GetPagesResponse();
