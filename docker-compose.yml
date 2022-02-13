@@ -30,3 +30,10 @@ services:
       - ./envoy.yaml:/etc/envoy/envoy.yaml
     ports:
       - "80:8080"
+
+  file-server:
+    image: nginx
+    volumes:
+      - ./data:/usr/share/nginx/html
+    ports:
+      - "9000:80"
