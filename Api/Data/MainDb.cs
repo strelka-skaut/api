@@ -5,6 +5,7 @@ namespace Api.Data;
 
 public class MainDb : DbContext
 {
+    public MainDb(DbContextOptions<MainDb> options):base(options){}
     public DbSet<Site> Sites { get; set; }
     public DbSet<Layout> Layouts { get; set; }
     public DbSet<Page> Pages { get; set; }
@@ -13,8 +14,6 @@ public class MainDb : DbContext
 
     protected override void OnConfiguring(DbContextOptionsBuilder options)
     {
-        // options.UseNpgsql("server=localhost;port=5432;user id=root;password=root;database=main");
-        options.UseNpgsql("server=localhost;port=5433;user id=root;password=root;database=main");
         options.LogTo(Console.WriteLine);
         options.EnableDetailedErrors();
         options.EnableSensitiveDataLogging();

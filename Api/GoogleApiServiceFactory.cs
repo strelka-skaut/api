@@ -4,12 +4,19 @@ using Google.Apis.Services;
 
 namespace Api;
 
-public class DriveServiceFactory
+public class GoogleApiServiceFactory
 {
-    public DriveService Create()
+    private string _serviceAccountCredentialFile;
+
+    public GoogleApiServiceFactory(string serviceAccountCredentialFile)
+    {
+        _serviceAccountCredentialFile = serviceAccountCredentialFile;
+    }
+
+    public DriveService CreateDriveService()
     {
         var credential = GoogleCredential
-            .FromFile("/home/martin/p/strelka/auth.json")
+            .FromFile(_serviceAccountCredentialFile)
             .CreateScoped(DriveService.Scope.DriveReadonly);
 
         return new DriveService(new BaseClientService.Initializer() {

@@ -1,3 +1,4 @@
+using ApiSpec.Grpc;
 using ApiSpec.Grpc.Media;
 using Google.Apis.Auth.OAuth2;
 using Google.Apis.Drive.v3;
@@ -44,15 +45,21 @@ public class MediaService : Service.ServiceBase
         return base.DeleteGallery(request, context);
     }
 
-    public override async Task<GetGalleryPhotosResponse> GetGalleryPhotos(GetGalleryPhotosRequest request, ServerCallContext context)
+    private async Task<Data.Gallery> GetGalleryById(Uuid uuid)
     {
-        var id = Guid.Parse(request.GalleryId.Value);
+        var id = Guid.Parse(uuid.Value);
 
         var dbGallery = await _db.Galleries.FindAsync(id);
         if (dbGallery == null)
             throw new NotFound($"Gallery {id} not found.");
 
-        var dbGalleryPhotos = await _db.Photos.Where(x => x.GalleryId == id).ToListAsync();
+        return dbGallery;
+    }
+    
+    public override async Task<GetGalleryPhotosResponse> GetGalleryPhotos(GetGalleryPhotosRequest request, ServerCallContext context)
+    {
+        var dbGallery = await GetGalleryById(request.GalleryId);
+        var dbGalleryPhotos = await _db.Photos.Where(x => x.GalleryId == dbGallery.Id).ToListAsync();
 
         return new GetGalleryPhotosResponse()
         {
@@ -64,17 +71,25 @@ public class MediaService : Service.ServiceBase
                 Id = p.Id.ToUuid(),
                 Order = p.Order
             })}
-        };   
-        
+        };
     }
 
-    public override Task<SyncGalleryPhotosResponse> SyncGalleryPhotos(SyncGalleryPhotosRequest request, ServerCallContext context)
+    public override async Task<SyncGalleryPhotosResponse> SyncGalleryPhotos(SyncGalleryPhotosRequest request, ServerCallContext context)
     {
-        return base.SyncGalleryPhotos(request, context);
+        var dbGallery = await GetGalleryById(request.GalleryId);
+
+
+        //var req = _driveService.Files.List();
+        
+        
+        
+        return await base.SyncGalleryPhotos(request, context);
     }
     
     public override async Task<GetFileUrlResponse> GetFileUrl(GetFileUrlRequest request, ServerCallContext context)
     {
+
+
         var req = _driveService.Files.Get(request.GdriveFileId);
         req.SupportsAllDrives = true;
         req.Fields = "id,webContentLink";
