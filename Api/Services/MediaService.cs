@@ -4,6 +4,7 @@ using ApiSpec.Grpc;
 using ApiSpec.Grpc.Media;
 using Google.Apis.Auth.OAuth2;
 using Google.Apis.Drive.v3;
+using Google.Apis.Requests;
 using Google.Apis.Services;
 using Grpc.Core;
 using Microsoft.EntityFrameworkCore;
@@ -166,15 +167,26 @@ public class MediaService : Service.ServiceBase
     {
         var dbGallery = await GetGalleryById(request.GalleryId);
 
-        var gdriveReq = _driveService.Files.List();
-        gdriveReq.Q = $"'{dbGallery.GdriveFolderId}' in parents";
-        gdriveReq.SupportsAllDrives = true;
-        var gdriveRes = await gdriveReq.ExecuteAsStreamAsync();
-
-
-
-
-            //var req = _driveService.Files.List();
+        // var gdriveReq = _driveService.Files.List();
+        // gdriveReq.Q = $"'{dbGallery.GdriveFolderId}' in parents";
+        // gdriveReq.Fields = "";
+        // gdriveReq.SupportsAllDrives = true;
+        //
+        // var streamer = new PageStreamer<Google.Apis.Drive.v3.Data.File, Google.Apis.Drive.v3.FilesResource.ListRequest,
+        //     Google.Apis.Drive.v3.Data.FileList, String>(
+        //     (listRequest, s) => listRequest.PageToken = s,
+        //     list => list.NextPageToken,
+        //     list => list.Files);
+        //
+        // foreach(var file in streamer.Fetch(gdriveReq))
+        // {
+        //
+        // }
+        //
+        //
+        //
+        //
+        //     //var req = _driveService.Files.List();
 
 
         return await base.SyncGalleryPhotos(request, context);
