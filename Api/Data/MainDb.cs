@@ -56,7 +56,7 @@ public class Gallery
     public Guid Id { get; set; }
     public string Name { get; set; }
     public string Slug { get; set; }
-    public string? GdriveFolderId { get; set; }
+    public string GdriveFolderId { get; set; }
     public Guid? SiteId { get; set; }
     public Site? Site { get; set; }
 }

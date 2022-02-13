@@ -23,6 +23,12 @@ builder.Services.AddDbContext<MainDb>((optionsBuilder) =>
 var googleApiServiceFactory = new GoogleApiServiceFactory(builder.Configuration["Google:ServiceAccountCredentialFile"]);
 builder.Services.Add(new ServiceDescriptor(typeof(DriveService), googleApiServiceFactory.CreateDriveService()));
 
+builder.Services.Add(new ServiceDescriptor(typeof(MediaService.Configuration), new MediaService.Configuration
+{
+    FileCacheBasePath = builder.Configuration["FileCache:BasePath"],
+    FileCacheBaseUrl = builder.Configuration["FileCache:BaseUrl"]
+}));
+
 var app = builder.Build();
 
 app.UseRouting();
