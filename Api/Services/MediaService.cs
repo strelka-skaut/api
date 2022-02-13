@@ -65,7 +65,7 @@ public class MediaService : Service.ServiceBase
     {
         Guid? siteId = request.SiteId != null ? (await GetSiteById(request.SiteId)).Id : null;
 
-        if (GdriveIdRegex.IsMatch(request.GdriveFolderId))
+        if (!GdriveIdRegex.IsMatch(request.GdriveFolderId))
             throw new Exception("Invalid GdriveFolderId");
 
         var id = Guid.NewGuid();

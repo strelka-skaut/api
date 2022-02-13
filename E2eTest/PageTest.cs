@@ -31,6 +31,7 @@ public class PageTest
         Assert.Equal("Silvestr 2021", respGet.Page.Name);
         Assert.Equal("silvestr-2021", respGet.Page.Slug);
         Assert.Equal("Sesli jsme se...", respGet.Page.Content);
+        Assert.True(respGet.Page.UpdatedAt.ToDateTime().Year > 0);
 
         client.DeletePage(new DeletePageRequest
         {
