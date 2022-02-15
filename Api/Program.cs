@@ -2,7 +2,6 @@ using System.Net;
 using Api;
 using Api.Data;
 using Api.Services;
-using Google.Apis.Drive.v3;
 using Microsoft.AspNetCore.Server.Kestrel.Core;
 using Microsoft.EntityFrameworkCore;
 
@@ -15,19 +14,20 @@ builder.WebHost.ConfigureKestrel(options =>
 
 builder.Services.AddGrpc(o => { o.Interceptors.Add<ExceptionInterceptor>(); });
 
-builder.Services.AddDbContext<MainDb>((optionsBuilder) =>
+builder.Services.AddDbContext<MainDb>(options =>
 {
-    optionsBuilder.UseNpgsql(builder.Configuration["Database:NpgsqlString"]);
+    options.UseNpgsql(builder.Configuration["Database:NpgsqlString"]);
 });
 
-var googleApiServiceFactory = new GoogleApiServiceFactory(builder.Configuration["Google:ServiceAccountCredentialFile"]);
-builder.Services.Add(new ServiceDescriptor(typeof(DriveService), googleApiServiceFactory.CreateDriveService()));
+builder.Services.AddSingleton(
+    _ => new GoogleApiServiceFactory(builder.Configuration["Google:ServiceAccountCredentialFile"]).CreateDriveService()
+);
 
-builder.Services.Add(new ServiceDescriptor(typeof(MediaService.Configuration), new MediaService.Configuration
+builder.Services.AddSingleton(_ => new MediaService.Configuration
 {
     FileCacheBasePath = builder.Configuration["FileCache:BasePath"],
     FileCacheBaseUrl = builder.Configuration["FileCache:BaseUrl"]
-}));
+});
 
 var app = builder.Build();
 
