@@ -15,8 +15,8 @@ public class PageTest
 
         var respCreate = client.CreatePage(new CreatePageRequest
         {
-            Name = "Silvestr 2021",
-            Slug = "silvestr-2021",
+            Name    = "Silvestr 2021",
+            Slug    = "silvestr-2021",
             Content = "Sesli jsme se...",
         });
 
@@ -35,7 +35,7 @@ public class PageTest
 
         client.DeletePage(new DeletePageRequest
         {
-            PageId = respCreate.Id
+            PageId = respCreate.Id,
         });
     }
 
@@ -48,20 +48,20 @@ public class PageTest
         var ids = new List<Uuid>();
         ids.Add(client.CreatePage(new CreatePageRequest
         {
-            Name = "Podzimky 2021",
-            Slug = "podzimky-2021",
+            Name    = "Podzimky 2021",
+            Slug    = "podzimky-2021",
             Content = "Sesli jsme se...",
         }).Id);
         ids.Add(client.CreatePage(new CreatePageRequest
         {
-            Name = "Silvestr 2021",
-            Slug = "silvestr-2021",
+            Name    = "Silvestr 2021",
+            Slug    = "silvestr-2021",
             Content = "Opet jsme se sesli...",
         }).Id);
         ids.Add(client.CreatePage(new CreatePageRequest
         {
-            Name = "Brdy 2022",
-            Slug = "brdy-2022",
+            Name    = "Brdy 2022",
+            Slug    = "brdy-2022",
             Content = "Byla zima.",
         }).Id);
 
@@ -90,5 +90,35 @@ public class PageTest
                     PageId = id
                 });
         }
+    }
+
+    [Fact]
+    public void TestGetBySlug()
+    {
+        var channel = GrpcChannel.ForAddress("http://localhost:2000");
+        var client = new Service.ServiceClient(channel);
+
+        var respCreate = client.CreatePage(new CreatePageRequest
+        {
+            Name    = "Silvestr 2021",
+            Slug    = "silvestr-2021",
+            Content = "Sesli jsme se...",
+        });
+
+        var respGet = client.GetPageBySlug(new GetPageBySlugRequest
+        {
+            PageSlug = "silvestr-2021",
+        });
+
+        Assert.Equal(respCreate.Id, respGet.Page.Id);
+        Assert.Equal("Silvestr 2021", respGet.Page.Name);
+        Assert.Equal("silvestr-2021", respGet.Page.Slug);
+        Assert.Equal("Sesli jsme se...", respGet.Page.Content);
+        Assert.True(respGet.Page.UpdatedAt.ToDateTime().Year > 0);
+
+        client.DeletePage(new DeletePageRequest
+        {
+            PageId = respCreate.Id,
+        });
     }
 }

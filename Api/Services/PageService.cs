@@ -7,15 +7,15 @@ namespace Api.Services;
 
 public class PageService : Service.ServiceBase
 {
-    private Data.MainDb _db;
+    private readonly Data.MainDb          _db;
     private readonly ILogger<PageService> _log;
 
     public PageService(
-        Data.MainDb db,
+        Data.MainDb          db,
         ILogger<PageService> log
     )
     {
-        _db = db;
+        _db  = db;
         _log = log;
     }
 
@@ -36,27 +36,24 @@ public class PageService : Service.ServiceBase
 
         _db.Pages.Add(new Data.Page
         {
-            Id = id,
-            Name = request.Name,
-            Slug = request.Slug,
-            Content = request.Content,
-            UpdatedAt = DateTime.UtcNow,
+            Id            = id,
+            Name          = request.Name,
+            Slug          = request.Slug,
+            Content       = request.Content,
+            UpdatedAt     = DateTime.UtcNow,
             UpdatedUserId = Guid.Empty, // todo
-            SiteId = siteId
+            SiteId        = siteId,
         });
 
         await _db.SaveChangesAsync();
 
         return new CreatePageResponse
         {
-            Id = id.ToUuid()
+            Id = id.ToUuid(),
         };
     }
 
-    public override async Task<GetPageResponse> GetPage(
-        GetPageRequest request,
-        ServerCallContext context
-    )
+    public override async Task<GetPageResponse> GetPage(GetPageRequest request, ServerCallContext context)
     {
         var id = Guid.Parse(request.PageId.Value);
 
@@ -68,19 +65,40 @@ public class PageService : Service.ServiceBase
         {
             Page = new Page
             {
-                Id = dbPage.Id.ToUuid(),
-                Name = dbPage.Name,
-                Slug = dbPage.Slug,
-                Content = dbPage.Content,
-                UpdatedAt = dbPage.UpdatedAt.ToTimestamp(),
+                Id            = dbPage.Id.ToUuid(),
+                Name          = dbPage.Name,
+                Slug          = dbPage.Slug,
+                Content       = dbPage.Content,
+                UpdatedAt     = dbPage.UpdatedAt.ToTimestamp(),
                 UpdatedUserId = dbPage.UpdatedUserId.ToUuid(),
-                SiteId = dbPage.SiteId?.ToUuid()
+                SiteId        = dbPage.SiteId?.ToUuid(),
+            },
+        };
+    }
+
+    public override async Task<GetPageBySlugResponse> GetPageBySlug(
+        GetPageBySlugRequest request,
+        ServerCallContext    context
+    )
+    {
+        var page = await _db.Pages.FirstAsync(p => p.Slug == request.PageSlug);
+        return new GetPageBySlugResponse
+        {
+            Page = new Page
+            {
+                Id            = page.Id.ToUuid(),
+                Name          = page.Name,
+                Slug          = page.Slug,
+                Content       = page.Content,
+                UpdatedAt     = page.UpdatedAt.ToTimestamp(),
+                UpdatedUserId = page.UpdatedUserId.ToUuid(),
+                SiteId        = page.SiteId?.ToUuid(),
             },
         };
     }
 
     public override async Task<GetPagesResponse> GetPages(
-        GetPagesRequest request,
+        GetPagesRequest   request,
         ServerCallContext context
     )
     {
@@ -98,13 +116,13 @@ public class PageService : Service.ServiceBase
         {
             resp.Pages.Add(new Page
             {
-                Id = page.Id.ToUuid(),
-                Name = page.Name,
-                Slug = page.Slug,
-                Content = page.Content,
-                UpdatedAt = page.UpdatedAt.ToTimestamp(),
+                Id            = page.Id.ToUuid(),
+                Name          = page.Name,
+                Slug          = page.Slug,
+                Content       = page.Content,
+                UpdatedAt     = page.UpdatedAt.ToTimestamp(),
                 UpdatedUserId = page.UpdatedUserId.ToUuid(),
-                SiteId = page.SiteId?.ToUuid()
+                SiteId        = page.SiteId?.ToUuid(),
             });
         }
 
