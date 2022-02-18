@@ -27,7 +27,7 @@ public class PageService : Service.ServiceBase
         Guid? siteId = null;
         if (request.SiteId != null)
         {
-            siteId = Guid.Parse(request.SiteId.Value);
+            siteId = request.SiteId.ToGuid();
             if (!await _db.Sites.AnyAsync(s => s.Id == siteId))
                 throw new Exception($"Site {siteId} does not exist.");
         }
@@ -55,7 +55,7 @@ public class PageService : Service.ServiceBase
 
     public override async Task<GetPageResponse> GetPage(GetPageRequest request, ServerCallContext context)
     {
-        var id = Guid.Parse(request.PageId.Value);
+        var id = request.PageId.ToGuid();
 
         var dbPage = await _db.Pages.FindAsync(id);
         if (dbPage == null)
@@ -131,15 +131,24 @@ public class PageService : Service.ServiceBase
 
     public override async Task<UpdatePageResponse> UpdatePage(UpdatePageRequest request, ServerCallContext context)
     {
-        var id = Guid.Parse(request.PageId.Value);
+        var id = request.PageId.ToGuid();
 
         var dbPage = await _db.Pages.FindAsync(id);
         if (dbPage == null)
             throw new NotFound($"Page {id} not found.");
 
-        dbPage.Name      = request.Name;
-        dbPage.Slug      = request.Slug;
-        dbPage.Content   = request.Content;
+        if (request.HasName)
+            dbPage.Name = request.Name;
+
+        if (request.HasSlug)
+            dbPage.Slug = request.Slug;
+
+        if (request.HasContent)
+            dbPage.Content = request.Content;
+
+        if (request.HasSiteId)
+            dbPage.SiteId = request.SiteId.ToGuid();
+
         dbPage.UpdatedAt = DateTime.UtcNow;
 
         await _db.SaveChangesAsync();
@@ -152,7 +161,7 @@ public class PageService : Service.ServiceBase
         ServerCallContext context
     )
     {
-        var id = Guid.Parse(request.PageId.Value);
+        var id = request.PageId.ToGuid();
         var page = await _db.Pages.FindAsync(id);
         if (page == null)
             throw new NotFound($"Page {id} not found.");
