@@ -9,17 +9,17 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
 #nullable disable
 
-namespace Api.Migrations
+namespace Data.Migrations
 {
     [DbContext(typeof(MainDb))]
-    [Migration("20220212203201_CreateModel")]
+    [Migration("20220218225401_CreateModel")]
     partial class CreateModel
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "6.0.1")
+                .HasAnnotation("ProductVersion", "6.0.2")
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
@@ -31,6 +31,7 @@ namespace Api.Migrations
                         .HasColumnType("uuid");
 
                     b.Property<string>("GdriveFolderId")
+                        .IsRequired()
                         .HasColumnType("text");
 
                     b.Property<string>("Name")

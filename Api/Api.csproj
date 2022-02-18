@@ -8,15 +8,17 @@
     </PropertyGroup>
 
     <ItemGroup>
+        <ProjectReference Include="../Data/Data.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
         <PackageReference Include="CSharpApiSpec" Version="1.0.20" />
         <PackageReference Include="Google.Apis.Drive.v3" Version="1.55.0.2566" />
         <PackageReference Include="Grpc.AspNetCore" Version="2.40.0" />
-        <PackageReference Include="Microsoft.EntityFrameworkCore" Version="6.0.1" />
-        <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="6.0.1">
-          <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
-          <PrivateAssets>all</PrivateAssets>
+        <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="6.0.2">
+            <PrivateAssets>all</PrivateAssets>
+            <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
         </PackageReference>
-        <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="6.0.3" />
     </ItemGroup>
 
 </Project>

@@ -3,7 +3,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
 
-namespace Api.Migrations
+namespace Data.Migrations
 {
     public partial class CreateModel : Migration
     {
@@ -48,7 +48,7 @@ namespace Api.Migrations
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
                     Name = table.Column<string>(type: "text", nullable: false),
                     Slug = table.Column<string>(type: "text", nullable: false),
-                    GdriveFolderId = table.Column<string>(type: "text", nullable: true),
+                    GdriveFolderId = table.Column<string>(type: "text", nullable: false),
                     SiteId = table.Column<Guid>(type: "uuid", nullable: true)
                 },
                 constraints: table =>

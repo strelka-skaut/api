@@ -26,7 +26,7 @@ builder.Services.AddSingleton(
 builder.Services.AddSingleton(_ => new MediaService.Configuration
 {
     FileCacheBasePath = builder.Configuration["FileCache:BasePath"],
-    FileCacheBaseUrl = builder.Configuration["FileCache:BaseUrl"]
+    FileCacheBaseUrl = builder.Configuration["FileCache:BaseUrl"],
 });
 
 var app = builder.Build();
