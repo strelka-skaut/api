@@ -40,6 +40,42 @@ public class PageTest
     }
 
     [Fact]
+    public void TestUpdate()
+    {
+        var channel = GrpcChannel.ForAddress("http://localhost:2000");
+        var client = new Service.ServiceClient(channel);
+
+        var respCreate = client.CreatePage(new CreatePageRequest
+        {
+            Name    = "Silvestr 2021",
+            Slug    = "silvestr-2021",
+            Content = "Sešli jsme se...",
+        });
+
+        var id = respCreate.Id;
+
+        var respGet1 = client.GetPage(new GetPageRequest {PageId = id});
+
+        client.UpdatePage(new UpdatePageRequest
+        {
+            PageId  = id,
+            Name    = "Podzimky 2021",
+            Slug    = "podzimky-2021",
+            Content = "Sešli jsme se na nádraží...",
+        });
+
+        var respGet2 = client.GetPage(new GetPageRequest {PageId = id});
+
+        Assert.Equal(id, respGet2.Page.Id);
+        Assert.Equal("Podzimky 2021", respGet2.Page.Name);
+        Assert.Equal("podzimky-2021", respGet2.Page.Slug);
+        Assert.Equal("Sešli jsme se na nádraží...", respGet2.Page.Content);
+        Assert.True(respGet2.Page.UpdatedAt > respGet1.Page.UpdatedAt);
+
+        client.DeletePage(new DeletePageRequest {PageId = id});
+    }
+
+    [Fact]
     public void TestGetPages()
     {
         var channel = GrpcChannel.ForAddress("http://localhost:2000");

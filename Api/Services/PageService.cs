@@ -129,6 +129,24 @@ public class PageService : Service.ServiceBase
         return resp;
     }
 
+    public override async Task<UpdatePageResponse> UpdatePage(UpdatePageRequest request, ServerCallContext context)
+    {
+        var id = Guid.Parse(request.PageId.Value);
+
+        var dbPage = await _db.Pages.FindAsync(id);
+        if (dbPage == null)
+            throw new NotFound($"Page {id} not found.");
+
+        dbPage.Name      = request.Name;
+        dbPage.Slug      = request.Slug;
+        dbPage.Content   = request.Content;
+        dbPage.UpdatedAt = DateTime.UtcNow;
+
+        await _db.SaveChangesAsync();
+
+        return new UpdatePageResponse();
+    }
+
     public override async Task<DeletePageResponse> DeletePage(
         DeletePageRequest request,
         ServerCallContext context
