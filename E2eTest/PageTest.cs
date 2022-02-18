@@ -65,31 +65,26 @@ public class PageTest
             Content = "Byla zima.",
         }).Id);
 
-        try
-        {
-            var resp = client.GetPages(new GetPagesRequest());
+        var resp = client.GetPages(new GetPagesRequest());
 
-            Assert.Equal(3, resp.Pages.Count);
-            Assert.All(resp.Pages, p => Assert.NotNull(p.Id));
-            Assert.Contains(resp.Pages, p => p.Name == "Podzimky 2021");
-            Assert.Contains(resp.Pages, p => p.Slug == "podzimky-2021");
-            Assert.Contains(resp.Pages, p => p.Content == "Sesli jsme se...");
-            Assert.Contains(resp.Pages, p => p.Name == "Silvestr 2021");
-            Assert.Contains(resp.Pages, p => p.Slug == "silvestr-2021");
-            Assert.Contains(resp.Pages, p => p.Content == "Opet jsme se sesli...");
-            Assert.Contains(resp.Pages, p => p.Name == "Brdy 2022");
-            Assert.Contains(resp.Pages, p => p.Slug == "brdy-2022");
-            Assert.Contains(resp.Pages, p => p.Content == "Byla zima.");
-        }
-        finally
-        {
-            // todo jen truncate jednoduse
-            foreach (var id in ids)
-                client.DeletePage(new DeletePageRequest
-                {
-                    PageId = id
-                });
-        }
+        Assert.Equal(3, resp.Pages.Count);
+        Assert.All(resp.Pages, p => Assert.NotNull(p.Id));
+        Assert.Contains(resp.Pages, p => p.Name == "Podzimky 2021");
+        Assert.Contains(resp.Pages, p => p.Slug == "podzimky-2021");
+        Assert.Contains(resp.Pages, p => p.Content == "Sesli jsme se...");
+        Assert.Contains(resp.Pages, p => p.Name == "Silvestr 2021");
+        Assert.Contains(resp.Pages, p => p.Slug == "silvestr-2021");
+        Assert.Contains(resp.Pages, p => p.Content == "Opet jsme se sesli...");
+        Assert.Contains(resp.Pages, p => p.Name == "Brdy 2022");
+        Assert.Contains(resp.Pages, p => p.Slug == "brdy-2022");
+        Assert.Contains(resp.Pages, p => p.Content == "Byla zima.");
+
+        // todo jen truncate jednoduse
+        foreach (var id in ids)
+            client.DeletePage(new DeletePageRequest
+            {
+                PageId = id,
+            });
     }
 
     [Fact]
