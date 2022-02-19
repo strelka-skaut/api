@@ -1,30 +1,25 @@
 using Api.Data;
 using ApiSpec.Grpc.Pages;
 using Grpc.Core;
-using Grpc.Net.Client;
 using Microsoft.EntityFrameworkCore;
 using Xunit;
 
 namespace E2eTest;
 
-public class PageTest : IDisposable
+public class PageTest : IClassFixture<Fixture>, IDisposable
 {
-    // todo ctor i Disposable to fixture
+    private readonly MainDb                _db;
     private readonly Service.ServiceClient _client;
 
-    public PageTest()
+    public PageTest(Fixture fixture)
     {
-        var channel = GrpcChannel.ForAddress("http://localhost:2000");
-        _client = new Service.ServiceClient(channel);
+        _db     = fixture.Db;
+        _client = new Service.ServiceClient(fixture.Channel);
     }
 
     public void Dispose()
     {
-        var builder = new DbContextOptionsBuilder<MainDb>();
-        builder.UseNpgsql("server=localhost;port=5432;user id=root;password=root;database=main");
-
-        var db = new MainDb(builder.Options);
-        db.Database.ExecuteSqlRaw("TRUNCATE TABLE \"Page\";");
+        _db.Database.ExecuteSqlRaw("DELETE FROM \"Page\";");
     }
 
     [Fact]
@@ -113,27 +108,24 @@ public class PageTest : IDisposable
     [Fact]
     public void TestGetMany()
     {
-        var ids = new[]
+        _client.CreatePage(new()
         {
-            _client.CreatePage(new()
-            {
-                Name    = "Podzimky 2021",
-                Slug    = "podzimky-2021",
-                Content = "Sešli jsme se...",
-            }).Id,
-            _client.CreatePage(new()
-            {
-                Name    = "Silvestr 2021",
-                Slug    = "silvestr-2021",
-                Content = "Opět jsme se sešli...",
-            }).Id,
-            _client.CreatePage(new()
-            {
-                Name    = "Brdy 2022",
-                Slug    = "brdy-2022",
-                Content = "Byla zima.",
-            }).Id,
-        };
+            Name    = "Podzimky 2021",
+            Slug    = "podzimky-2021",
+            Content = "Sešli jsme se...",
+        });
+        _client.CreatePage(new()
+        {
+            Name    = "Silvestr 2021",
+            Slug    = "silvestr-2021",
+            Content = "Opět jsme se sešli...",
+        });
+        _client.CreatePage(new()
+        {
+            Name    = "Brdy 2022",
+            Slug    = "brdy-2022",
+            Content = "Byla zima.",
+        });
 
         var resp = _client.GetPages(new());
 

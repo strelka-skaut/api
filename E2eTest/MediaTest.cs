@@ -1,36 +1,39 @@
+using Api.Data;
 using ApiSpec.Grpc.Media;
 using Grpc.Core;
-using Grpc.Net.Client;
+using Microsoft.EntityFrameworkCore;
 using Xunit;
 using Xunit.Abstractions;
 
 namespace E2eTest;
 
-public class MediaTest
+public class MediaTest : IClassFixture<Fixture>, IDisposable
 {
-    private const string GrpcServer = "http://localhost:2000";
+    private readonly ITestOutputHelper     _output;
+    private readonly MainDb                _db;
+    private readonly Service.ServiceClient _client;
 
-    private readonly ITestOutputHelper _testOutputHelper;
-
-    public MediaTest(ITestOutputHelper testOutputHelper)
+    public MediaTest(Fixture fixture, ITestOutputHelper output)
     {
-        _testOutputHelper = testOutputHelper;
+        _output = output;
+        _db     = fixture.Db;
+        _client = new Service.ServiceClient(fixture.Channel);
+    }
+
+    public void Dispose()
+    {
+        _db.Database.ExecuteSqlRaw("DELETE FROM \"Photo\";");
+        _db.Database.ExecuteSqlRaw("DELETE FROM \"Gallery\";");
     }
 
     [Fact]
     public async void TestGetFileUrl()
     {
-        var channel = GrpcChannel.ForAddress(GrpcServer);
-        var client = new Service.ServiceClient(channel);
-
-        var resp = client.GetFileUrl(new GetFileUrlRequest
-        {
-            GdriveFileId = "1EdHbPBd5eaw1Oi37GHCLXn12pRe0iBGV"
-        });
+        var resp = _client.GetFileUrl(new() {GdriveFileId = "1EdHbPBd5eaw1Oi37GHCLXn12pRe0iBGV"});
 
         Assert.NotEqual("", resp.Url);
 
-        _testOutputHelper.WriteLine(resp.Url);
+        _output.WriteLine(resp.Url);
 
         var http = new HttpClient();
         var httpResp = await http.GetAsync(resp.Url);
@@ -41,17 +44,14 @@ public class MediaTest
     [Fact]
     public async void TestGetPhotoThumbnailUrls()
     {
-        var channel = GrpcChannel.ForAddress(GrpcServer);
-        var client = new Service.ServiceClient(channel);
-
-        var resp = client.GetPhotoThumbnailUrls(new GetPhotoThumbnailUrlsRequest
+        var resp = _client.GetPhotoThumbnailUrls(new()
         {
             GdriveFileIds =
             {
                 "1EdHbPBd5eaw1Oi37GHCLXn12pRe0iBGV",
                 "1im6i-_uBRTA2T2Jfekl-Zd2tcfIYEywc",
                 "10ZHdnZRYqCgQ2VzOiwmdz2HvYZ5dFcrX",
-                "1zNkNDVSqfX6M9iyMJLXHzXsPDYup7YWL"
+                "1zNkNDVSqfX6M9iyMJLXHzXsPDYup7YWL",
             },
             Width = 250,
         });
@@ -59,7 +59,7 @@ public class MediaTest
         Assert.Equal(4, resp.Urls.Count);
 
         foreach (var url in resp.Urls)
-            _testOutputHelper.WriteLine(url);
+            _output.WriteLine(url);
 
         var http = new HttpClient();
 
@@ -71,45 +71,39 @@ public class MediaTest
     }
 
     [Fact]
-    public async void TestCreateGallery()
+    public void TestCreateAndGetGallery()
     {
-        var channel = GrpcChannel.ForAddress(GrpcServer);
-        var client = new Service.ServiceClient(channel);
-
-        var respCreate = client.CreateGallery(new CreateGalleryRequest
+        var respCreate = _client.CreateGallery(new()
         {
-            Name = "Moje krásná galerie. Nešahat!",
-            Slug = "moje-krasna-galerie-nesahat",
+            Name           = "Moje krásná galerie. Nešahat!",
+            Slug           = "moje-krasna-galerie-nesahat",
             GdriveFolderId = "1LGv0DUazad93AIZ6T5SyqonkCA9BV4hp",
         });
 
         Assert.NotNull(respCreate.Id);
 
-        var galleryId = respCreate.Id;
+        var respGet = _client.GetGallery(new() {GalleryId = respCreate.Id});
 
-        var respGet = client.GetGallery(new GetGalleryRequest
-        {
-            GalleryId = galleryId,
-        });
-
-        Assert.Equal(galleryId, respGet.Gallery.Id);
+        Assert.Equal(respCreate.Id, respGet.Gallery.Id);
         Assert.Equal("Moje krásná galerie. Nešahat!", respGet.Gallery.Name);
         Assert.Equal("moje-krasna-galerie-nesahat", respGet.Gallery.Slug);
         Assert.Equal("1LGv0DUazad93AIZ6T5SyqonkCA9BV4hp", respGet.Gallery.GdriveFolderId);
         Assert.Null(respGet.Gallery.SiteId);
+    }
 
-        client.DeleteGallery(new DeleteGalleryRequest
+    [Fact]
+    public void TestDeleteGallery()
+    {
+        var respCreate = _client.CreateGallery(new()
         {
-            GalleryId = galleryId,
+            Name           = "Moje krásná galerie. Nešahat!",
+            Slug           = "moje-krasna-galerie-nesahat",
+            GdriveFolderId = "1LGv0DUazad93AIZ6T5SyqonkCA9BV4hp",
         });
 
-        var e = Assert.Throws<RpcException>(() =>
-        {
-            client.GetGallery(new GetGalleryRequest
-            {
-                GalleryId = galleryId,
-            });
-        });
+        _client.DeleteGallery(new() {GalleryId = respCreate.Id});
+
+        var e = Assert.Throws<RpcException>(() => _client.GetGallery(new() {GalleryId = respCreate.Id}));
         Assert.Equal(StatusCode.NotFound, e.StatusCode);
     }
 }
