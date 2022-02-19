@@ -1,51 +1,57 @@
-using ApiSpec.Grpc;
+using Api.Data;
 using ApiSpec.Grpc.Pages;
+using Grpc.Core;
 using Grpc.Net.Client;
+using Microsoft.EntityFrameworkCore;
 using Xunit;
 
 namespace E2eTest;
 
-public class PageTest
+public class PageTest : IDisposable
 {
-    [Fact]
-    public void TestCreateAndGetAndDelete()
+    // todo ctor i Disposable to fixture
+    private readonly Service.ServiceClient _client;
+
+    public PageTest()
     {
         var channel = GrpcChannel.ForAddress("http://localhost:2000");
-        var client = new Service.ServiceClient(channel);
+        _client = new Service.ServiceClient(channel);
+    }
 
-        var respCreate = client.CreatePage(new CreatePageRequest
+    public void Dispose()
+    {
+        var builder = new DbContextOptionsBuilder<MainDb>();
+        builder.UseNpgsql("server=localhost;port=5432;user id=root;password=root;database=main");
+
+        var db = new MainDb(builder.Options);
+        db.Database.ExecuteSqlRaw("TRUNCATE TABLE \"Page\";");
+    }
+
+    [Fact]
+    public void TestCreateAndGet()
+    {
+        var respCreate = _client.CreatePage(new()
         {
             Name    = "Silvestr 2021",
             Slug    = "silvestr-2021",
-            Content = "Sesli jsme se...",
+            Content = "Sešli jsme se...",
         });
 
         Assert.NotNull(respCreate.Id);
 
-        var respGet = client.GetPage(new GetPageRequest
-        {
-            PageId = respCreate.Id,
-        });
+        var respGet = _client.GetPage(new() {PageId = respCreate.Id});
 
         Assert.Equal(respCreate.Id, respGet.Page.Id);
         Assert.Equal("Silvestr 2021", respGet.Page.Name);
         Assert.Equal("silvestr-2021", respGet.Page.Slug);
-        Assert.Equal("Sesli jsme se...", respGet.Page.Content);
+        Assert.Equal("Sešli jsme se...", respGet.Page.Content);
         Assert.True(respGet.Page.UpdatedAt.ToDateTime().Year > 0);
-
-        client.DeletePage(new DeletePageRequest
-        {
-            PageId = respCreate.Id,
-        });
     }
 
     [Fact]
     public void TestUpdate()
     {
-        var channel = GrpcChannel.ForAddress("http://localhost:2000");
-        var client = new Service.ServiceClient(channel);
-
-        var respCreate = client.CreatePage(new CreatePageRequest
+        var respCreate = _client.CreatePage(new()
         {
             Name    = "Silvestr 2021",
             Slug    = "silvestr-2021",
@@ -54,9 +60,9 @@ public class PageTest
 
         var id = respCreate.Id;
 
-        var respGet1 = client.GetPage(new GetPageRequest {PageId = id});
+        var respGet1 = _client.GetPage(new() {PageId = id});
 
-        client.UpdatePage(new UpdatePageRequest
+        _client.UpdatePage(new()
         {
             PageId  = id,
             Name    = "Podzimky 2021",
@@ -64,92 +70,83 @@ public class PageTest
             Content = "Sešli jsme se na nádraží...",
         });
 
-        var respGet2 = client.GetPage(new GetPageRequest {PageId = id});
+        var respGet2 = _client.GetPage(new() {PageId = id});
 
         Assert.Equal(id, respGet2.Page.Id);
         Assert.Equal("Podzimky 2021", respGet2.Page.Name);
         Assert.Equal("podzimky-2021", respGet2.Page.Slug);
         Assert.Equal("Sešli jsme se na nádraží...", respGet2.Page.Content);
         Assert.True(respGet2.Page.UpdatedAt > respGet1.Page.UpdatedAt);
-
-        client.DeletePage(new DeletePageRequest {PageId = id});
     }
 
     [Fact]
-    public void TestGetPages()
+    public void TestDelete()
     {
-        var channel = GrpcChannel.ForAddress("http://localhost:2000");
-        var client = new Service.ServiceClient(channel);
-
-        var ids = new List<Uuid>();
-        ids.Add(client.CreatePage(new CreatePageRequest
-        {
-            Name    = "Podzimky 2021",
-            Slug    = "podzimky-2021",
-            Content = "Sesli jsme se...",
-        }).Id);
-        ids.Add(client.CreatePage(new CreatePageRequest
+        var respCreate = _client.CreatePage(new()
         {
             Name    = "Silvestr 2021",
             Slug    = "silvestr-2021",
-            Content = "Opet jsme se sesli...",
-        }).Id);
-        ids.Add(client.CreatePage(new CreatePageRequest
-        {
-            Name    = "Brdy 2022",
-            Slug    = "brdy-2022",
-            Content = "Byla zima.",
-        }).Id);
+            Content = "Sešli jsme se...",
+        });
 
-        var resp = client.GetPages(new GetPagesRequest());
+        _client.DeletePage(new() {PageId = respCreate.Id});
 
-        Assert.Equal(3, resp.Pages.Count);
-        Assert.All(resp.Pages, p => Assert.NotNull(p.Id));
-        Assert.Contains(resp.Pages, p => p.Name == "Podzimky 2021");
-        Assert.Contains(resp.Pages, p => p.Slug == "podzimky-2021");
-        Assert.Contains(resp.Pages, p => p.Content == "Sesli jsme se...");
-        Assert.Contains(resp.Pages, p => p.Name == "Silvestr 2021");
-        Assert.Contains(resp.Pages, p => p.Slug == "silvestr-2021");
-        Assert.Contains(resp.Pages, p => p.Content == "Opet jsme se sesli...");
-        Assert.Contains(resp.Pages, p => p.Name == "Brdy 2022");
-        Assert.Contains(resp.Pages, p => p.Slug == "brdy-2022");
-        Assert.Contains(resp.Pages, p => p.Content == "Byla zima.");
-
-        // todo jen truncate jednoduse
-        foreach (var id in ids)
-            client.DeletePage(new DeletePageRequest
-            {
-                PageId = id,
-            });
+        var e = Assert.Throws<RpcException>(() => _client.GetPage(new() {PageId = respCreate.Id}));
+        Assert.Equal(StatusCode.NotFound, e.StatusCode);
     }
 
     [Fact]
     public void TestGetBySlug()
     {
-        var channel = GrpcChannel.ForAddress("http://localhost:2000");
-        var client = new Service.ServiceClient(channel);
-
-        var respCreate = client.CreatePage(new CreatePageRequest
+        var respCreate = _client.CreatePage(new()
         {
             Name    = "Silvestr 2021",
             Slug    = "silvestr-2021",
-            Content = "Sesli jsme se...",
+            Content = "Sešli jsme se...",
         });
 
-        var respGet = client.GetPageBySlug(new GetPageBySlugRequest
-        {
-            PageSlug = "silvestr-2021",
-        });
+        var respGet = _client.GetPageBySlug(new() {PageSlug = "silvestr-2021"});
 
         Assert.Equal(respCreate.Id, respGet.Page.Id);
-        Assert.Equal("Silvestr 2021", respGet.Page.Name);
-        Assert.Equal("silvestr-2021", respGet.Page.Slug);
-        Assert.Equal("Sesli jsme se...", respGet.Page.Content);
-        Assert.True(respGet.Page.UpdatedAt.ToDateTime().Year > 0);
+    }
 
-        client.DeletePage(new DeletePageRequest
+    [Fact]
+    public void TestGetMany()
+    {
+        var ids = new[]
         {
-            PageId = respCreate.Id,
-        });
+            _client.CreatePage(new()
+            {
+                Name    = "Podzimky 2021",
+                Slug    = "podzimky-2021",
+                Content = "Sešli jsme se...",
+            }).Id,
+            _client.CreatePage(new()
+            {
+                Name    = "Silvestr 2021",
+                Slug    = "silvestr-2021",
+                Content = "Opět jsme se sešli...",
+            }).Id,
+            _client.CreatePage(new()
+            {
+                Name    = "Brdy 2022",
+                Slug    = "brdy-2022",
+                Content = "Byla zima.",
+            }).Id,
+        };
+
+        var resp = _client.GetPages(new());
+
+        Assert.Equal(3, resp.Pages.Count);
+        Assert.All(resp.Pages, p => Assert.NotNull(p.Id));
+        Assert.Contains(resp.Pages, p => p.Name == "Podzimky 2021");
+        Assert.Contains(resp.Pages, p => p.Slug == "podzimky-2021");
+        Assert.Contains(resp.Pages, p => p.Content == "Sešli jsme se...");
+        Assert.Contains(resp.Pages, p => p.Name == "Silvestr 2021");
+        Assert.Contains(resp.Pages, p => p.Slug == "silvestr-2021");
+        Assert.Contains(resp.Pages, p => p.Content == "Opět jsme se sešli...");
+        Assert.Contains(resp.Pages, p => p.Name == "Brdy 2022");
+        Assert.Contains(resp.Pages, p => p.Slug == "brdy-2022");
+        Assert.Contains(resp.Pages, p => p.Content == "Byla zima.");
     }
 }

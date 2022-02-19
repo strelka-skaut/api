@@ -7,6 +7,10 @@
     </PropertyGroup>
 
     <ItemGroup>
+        <ProjectReference Include="../Data/Data.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
         <PackageReference Include="CSharpApiClient" Version="1.0.20" />
         <PackageReference Include="Google.Apis.Drive.v3" Version="1.55.0.2566" />
         <PackageReference Include="Google.Protobuf" Version="3.19.3" />
