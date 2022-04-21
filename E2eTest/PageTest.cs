@@ -41,6 +41,30 @@ public class PageTest : IClassFixture<Fixture>, IDisposable
         Assert.Equal("silvestr-2021", respGet.Page.Slug);
         Assert.Equal("Sešli jsme se...", respGet.Page.Content);
         Assert.True(respGet.Page.UpdatedAt.ToDateTime().Year > 0);
+        Assert.Null(respGet.Page.ParentId);
+    }
+
+    [Fact]
+    public void TestCreateNested()
+    {
+        var respCreate1 = _client.CreatePage(new()
+        {
+            Name = "Akce 2021",
+            Slug = "akce-2021",
+        });
+
+        var respCreate2 = _client.CreatePage(new()
+        {
+            Name     = "Silvestr",
+            Slug     = "silvestr",
+            Content  = "Sešli jsme se...",
+            ParentId = respCreate1.Id,
+        });
+
+        var respGet = _client.GetPage(new() {PageId = respCreate2.Id});
+
+        Assert.Equal(respCreate2.Id, respGet.Page.Id);
+        Assert.Equal(respCreate1.Id, respGet.Page.ParentId);
     }
 
     [Fact]

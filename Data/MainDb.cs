@@ -51,6 +51,8 @@ public class Page
     public Guid     UpdatedUserId { get; set; }
     public Guid?    SiteId        { get; set; }
     public Site?    Site          { get; set; }
+    public Guid?    ParentId      { get; set; }
+    public Page?    Parent        { get; set; }
 }
 
 [Table("Gallery")]

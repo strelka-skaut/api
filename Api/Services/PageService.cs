@@ -32,6 +32,15 @@ public class PageService : Service.ServiceBase
                 throw new Exception($"Site {siteId} does not exist.");
         }
 
+        Guid? parentId = null;
+        if (request.ParentId != null)
+        {
+            parentId = request.ParentId.ToGuid();
+            if (!await _db.Pages.AnyAsync(p => p.Id == parentId))
+                throw new Exception($"Page {parentId} does not exist.");
+        }
+        // todo validation: loop, roles...
+
         var id = Guid.NewGuid();
 
         _db.Pages.Add(new Data.Page
@@ -43,6 +52,7 @@ public class PageService : Service.ServiceBase
             UpdatedAt     = DateTime.UtcNow,
             UpdatedUserId = Guid.Empty, // todo
             SiteId        = siteId,
+            ParentId      = parentId,
         });
 
         await _db.SaveChangesAsync();
@@ -72,6 +82,7 @@ public class PageService : Service.ServiceBase
                 UpdatedAt     = dbPage.UpdatedAt.ToTimestamp(),
                 UpdatedUserId = dbPage.UpdatedUserId.ToUuid(),
                 SiteId        = dbPage.SiteId?.ToUuid(),
+                ParentId      = dbPage.ParentId?.ToUuid(),
             },
         };
     }
@@ -93,6 +104,7 @@ public class PageService : Service.ServiceBase
                 UpdatedAt     = page.UpdatedAt.ToTimestamp(),
                 UpdatedUserId = page.UpdatedUserId.ToUuid(),
                 SiteId        = page.SiteId?.ToUuid(),
+                ParentId      = page.ParentId?.ToUuid(),
             },
         };
     }
@@ -123,6 +135,7 @@ public class PageService : Service.ServiceBase
                 UpdatedAt     = page.UpdatedAt.ToTimestamp(),
                 UpdatedUserId = page.UpdatedUserId.ToUuid(),
                 SiteId        = page.SiteId?.ToUuid(),
+                ParentId      = page.ParentId?.ToUuid(),
             });
         }
 
@@ -147,7 +160,10 @@ public class PageService : Service.ServiceBase
             dbPage.Content = request.Content;
 
         if (request.HasSiteId)
-            dbPage.SiteId = request.SiteId.ToGuid();
+            dbPage.SiteId = request.SiteId.ToGuid(); // todo validation
+
+        if (request.HasParentId)
+            dbPage.ParentId = request.ParentId.ToGuid(); // todo validation
 
         dbPage.UpdatedAt = DateTime.UtcNow;
 
@@ -168,6 +184,8 @@ public class PageService : Service.ServiceBase
 
         _db.Remove(page);
         await _db.SaveChangesAsync();
+
+        // todo remove nested pages
 
         return new DeletePageResponse();
     }
