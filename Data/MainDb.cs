@@ -47,6 +47,7 @@ public class Page
     public string   Name          { get; set; }
     public string   Slug          { get; set; }
     public string   Content       { get; set; }
+    public string   Role          { get; set; }
     public DateTime UpdatedAt     { get; set; }
     public Guid     UpdatedUserId { get; set; }
     public Guid?    SiteId        { get; set; }

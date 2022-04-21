@@ -49,6 +49,7 @@ public class PageService : Service.ServiceBase
             Name          = request.Name,
             Slug          = request.Slug,
             Content       = request.Content,
+            Role          = request.Role,
             UpdatedAt     = DateTime.UtcNow,
             UpdatedUserId = Guid.Empty, // todo
             SiteId        = siteId,
@@ -79,6 +80,7 @@ public class PageService : Service.ServiceBase
                 Name          = dbPage.Name,
                 Slug          = dbPage.Slug,
                 Content       = dbPage.Content,
+                Role          = dbPage.Role,
                 UpdatedAt     = dbPage.UpdatedAt.ToTimestamp(),
                 UpdatedUserId = dbPage.UpdatedUserId.ToUuid(),
                 SiteId        = dbPage.SiteId?.ToUuid(),
@@ -101,6 +103,7 @@ public class PageService : Service.ServiceBase
                 Name          = page.Name,
                 Slug          = page.Slug,
                 Content       = page.Content,
+                Role          = page.Role,
                 UpdatedAt     = page.UpdatedAt.ToTimestamp(),
                 UpdatedUserId = page.UpdatedUserId.ToUuid(),
                 SiteId        = page.SiteId?.ToUuid(),
@@ -132,6 +135,7 @@ public class PageService : Service.ServiceBase
                 Name          = page.Name,
                 Slug          = page.Slug,
                 Content       = page.Content,
+                Role          = page.Role,
                 UpdatedAt     = page.UpdatedAt.ToTimestamp(),
                 UpdatedUserId = page.UpdatedUserId.ToUuid(),
                 SiteId        = page.SiteId?.ToUuid(),
@@ -158,6 +162,9 @@ public class PageService : Service.ServiceBase
 
         if (request.HasContent)
             dbPage.Content = request.Content;
+
+        if (request.HasRole)
+            dbPage.Role = request.Role;
 
         if (request.HasSiteId)
             dbPage.SiteId = request.SiteId.ToGuid(); // todo validation

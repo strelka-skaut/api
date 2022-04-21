@@ -30,6 +30,7 @@ public class PageTest : IClassFixture<Fixture>, IDisposable
             Name    = "Silvestr 2021",
             Slug    = "silvestr-2021",
             Content = "Sešli jsme se...",
+            Role    = "event",
         });
 
         Assert.NotNull(respCreate.Id);
@@ -40,6 +41,7 @@ public class PageTest : IClassFixture<Fixture>, IDisposable
         Assert.Equal("Silvestr 2021", respGet.Page.Name);
         Assert.Equal("silvestr-2021", respGet.Page.Slug);
         Assert.Equal("Sešli jsme se...", respGet.Page.Content);
+        Assert.Equal("event", respGet.Page.Role);
         Assert.True(respGet.Page.UpdatedAt.ToDateTime().Year > 0);
         Assert.Null(respGet.Page.ParentId);
     }
@@ -75,6 +77,7 @@ public class PageTest : IClassFixture<Fixture>, IDisposable
             Name    = "Silvestr 2021",
             Slug    = "silvestr-2021",
             Content = "Sešli jsme se...",
+            Role    = "event",
         });
 
         var id = respCreate.Id;
@@ -87,6 +90,7 @@ public class PageTest : IClassFixture<Fixture>, IDisposable
             Name    = "Podzimky 2021",
             Slug    = "podzimky-2021",
             Content = "Sešli jsme se na nádraží...",
+            Role    = "action",
         });
 
         var respGet2 = _client.GetPage(new() {PageId = id});
@@ -95,6 +99,7 @@ public class PageTest : IClassFixture<Fixture>, IDisposable
         Assert.Equal("Podzimky 2021", respGet2.Page.Name);
         Assert.Equal("podzimky-2021", respGet2.Page.Slug);
         Assert.Equal("Sešli jsme se na nádraží...", respGet2.Page.Content);
+        Assert.Equal("action", respGet2.Page.Role);
         Assert.True(respGet2.Page.UpdatedAt > respGet1.Page.UpdatedAt);
     }
 
