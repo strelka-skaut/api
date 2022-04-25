@@ -33,7 +33,8 @@ var app = builder.Build();
 
 app.UseRouting();
 
-app.MapGrpcService<PageService>();
 app.MapGrpcService<MediaService>();
+app.MapGrpcService<PageService>();
+app.MapGrpcService<SiteService>();
 
 app.Run();

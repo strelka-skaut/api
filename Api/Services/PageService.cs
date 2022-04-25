@@ -24,20 +24,19 @@ public class PageService : Service.ServiceBase
         ServerCallContext context
     )
     {
-        Guid? siteId = null;
-        if (request.SiteId != null)
-        {
-            siteId = request.SiteId.ToGuid();
-            if (!await _db.Sites.AnyAsync(s => s.Id == siteId))
-                throw new Exception($"Site {siteId} does not exist.");
-        }
+        if (request.SiteId == null)
+            throw new InvalidArgument("SiteId is required.");
+
+        var siteId = request.SiteId.ToGuid();
+        if (!await _db.Sites.AnyAsync(s => s.Id == siteId))
+            throw new FailedPrecondition($"Site {siteId} does not exist.");
 
         Guid? parentId = null;
         if (request.ParentId != null)
         {
             parentId = request.ParentId.ToGuid();
             if (!await _db.Pages.AnyAsync(p => p.Id == parentId))
-                throw new Exception($"Page {parentId} does not exist.");
+                throw new FailedPrecondition($"Page {parentId} does not exist.");
         }
         // todo validation: loop, roles...
 
@@ -83,7 +82,7 @@ public class PageService : Service.ServiceBase
                 Role          = dbPage.Role,
                 UpdatedAt     = dbPage.UpdatedAt.ToTimestamp(),
                 UpdatedUserId = dbPage.UpdatedUserId.ToUuid(),
-                SiteId        = dbPage.SiteId?.ToUuid(),
+                SiteId        = dbPage.SiteId.ToUuid(),
                 ParentId      = dbPage.ParentId?.ToUuid(),
             },
         };
@@ -106,7 +105,7 @@ public class PageService : Service.ServiceBase
                 Role          = page.Role,
                 UpdatedAt     = page.UpdatedAt.ToTimestamp(),
                 UpdatedUserId = page.UpdatedUserId.ToUuid(),
-                SiteId        = page.SiteId?.ToUuid(),
+                SiteId        = page.SiteId.ToUuid(),
                 ParentId      = page.ParentId?.ToUuid(),
             },
         };
@@ -118,7 +117,7 @@ public class PageService : Service.ServiceBase
     )
     {
         if (request.Limit > 1000)
-            throw new Exception("Limit cannot be greater than 1000.");
+            throw new InvalidArgument("Limit cannot be greater than 1000.");
 
         var dbPages = await _db.Pages
             .OrderBy(x => x.Content)
@@ -138,7 +137,7 @@ public class PageService : Service.ServiceBase
                 Role          = page.Role,
                 UpdatedAt     = page.UpdatedAt.ToTimestamp(),
                 UpdatedUserId = page.UpdatedUserId.ToUuid(),
-                SiteId        = page.SiteId?.ToUuid(),
+                SiteId        = page.SiteId.ToUuid(),
                 ParentId      = page.ParentId?.ToUuid(),
             });
         }
@@ -166,8 +165,14 @@ public class PageService : Service.ServiceBase
         if (request.HasRole)
             dbPage.Role = request.Role;
 
-        if (request.HasSiteId)
-            dbPage.SiteId = request.SiteId.ToGuid(); // todo validation
+        if (request.SiteId != null)
+        {
+            var siteId = request.SiteId.ToGuid();
+            if (!await _db.Sites.AnyAsync(s => s.Id == siteId))
+                throw new FailedPrecondition($"Site {siteId} does not exist.");
+
+            dbPage.SiteId = siteId;
+        }
 
         if (request.HasParentId)
             dbPage.ParentId = request.ParentId.ToGuid(); // todo validation

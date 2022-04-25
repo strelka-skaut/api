@@ -10,7 +10,6 @@ public class MainDb : DbContext
     }
 
     public DbSet<Site>    Sites     { get; set; } = null!;
-    public DbSet<Layout>  Layouts   { get; set; } = null!;
     public DbSet<Page>    Pages     { get; set; } = null!;
     public DbSet<Gallery> Galleries { get; set; } = null!;
     public DbSet<Photo>   Photos    { get; set; } = null!;
@@ -26,18 +25,9 @@ public class MainDb : DbContext
 [Table("Site")]
 public class Site
 {
-    public Guid   Id       { get; set; }
-    public string Name     { get; set; }
-    public string Slug     { get; set; }
-    public Guid   LayoutId { get; set; }
-    public Layout Layout   { get; set; }
-}
-
-[Table("Layout")]
-public class Layout
-{
-    public Guid   Id      { get; set; }
-    public string Content { get; set; }
+    public Guid   Id   { get; set; }
+    public string Name { get; set; }
+    public string Slug { get; set; }
 }
 
 [Table("Page")]
@@ -50,8 +40,8 @@ public class Page
     public string   Role          { get; set; }
     public DateTime UpdatedAt     { get; set; }
     public Guid     UpdatedUserId { get; set; }
-    public Guid?    SiteId        { get; set; }
-    public Site?    Site          { get; set; }
+    public Guid     SiteId        { get; set; }
+    public Site     Site          { get; set; }
     public Guid?    ParentId      { get; set; }
     public Page?    Parent        { get; set; }
 }

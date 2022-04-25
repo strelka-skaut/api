@@ -1,4 +1,5 @@
 using Api.Data;
+using ApiSpec.Grpc;
 using ApiSpec.Grpc.Pages;
 using Grpc.Core;
 using Microsoft.EntityFrameworkCore;
@@ -11,15 +12,28 @@ public class PageTest : IClassFixture<Fixture>, IDisposable
     private readonly MainDb                _db;
     private readonly Service.ServiceClient _client;
 
+    private readonly Uuid _siteId;
+
     public PageTest(Fixture fixture)
     {
         _db     = fixture.Db;
         _client = new Service.ServiceClient(fixture.Channel);
+
+        var siteId = Guid.NewGuid();
+        _db.Sites.Add(new Site
+        {
+            Id   = siteId,
+            Name = "",
+            Slug = "",
+        });
+        _db.SaveChanges();
+        _siteId = new Uuid {Value = siteId.ToString()};
     }
 
     public void Dispose()
     {
         _db.Database.ExecuteSqlRaw("DELETE FROM \"Page\";");
+        _db.Database.ExecuteSqlRaw("DELETE FROM \"Site\";");
     }
 
     [Fact]
@@ -30,6 +44,7 @@ public class PageTest : IClassFixture<Fixture>, IDisposable
             Name    = "Silvestr 2021",
             Slug    = "silvestr-2021",
             Content = "Sešli jsme se...",
+            SiteId  = _siteId,
             Role    = "event",
         });
 
@@ -41,9 +56,42 @@ public class PageTest : IClassFixture<Fixture>, IDisposable
         Assert.Equal("Silvestr 2021", respGet.Page.Name);
         Assert.Equal("silvestr-2021", respGet.Page.Slug);
         Assert.Equal("Sešli jsme se...", respGet.Page.Content);
+        Assert.Equal(_siteId, respGet.Page.SiteId);
         Assert.Equal("event", respGet.Page.Role);
         Assert.True(respGet.Page.UpdatedAt.ToDateTime().Year > 0);
         Assert.Null(respGet.Page.ParentId);
+    }
+
+    [Fact]
+    public void TestCreateFailsWhenSiteDoesNotExist()
+    {
+        var request = new CreatePageRequest
+        {
+            SiteId = new Uuid {Value = "53ba52cc-0226-4093-9c43-8c873a9c11a2"},
+        };
+
+        var e = Assert.Throws<RpcException>(() => _client.CreatePage(request));
+        Assert.Equal(StatusCode.FailedPrecondition, e.StatusCode);
+    }
+
+    [Fact]
+    public void TestUpdateFailsWhenSiteDoesNotExist()
+    {
+        var respCreate = _client.CreatePage(new()
+        {
+            SiteId = _siteId,
+        });
+
+        var id = respCreate.Id;
+
+        var updateRequest = new UpdatePageRequest
+        {
+            PageId = id,
+            SiteId = new Uuid {Value = "53ba52cc-0226-4093-9c43-8c873a9c11a2"},
+        };
+
+        var e = Assert.Throws<RpcException>(() => _client.UpdatePage(updateRequest));
+        Assert.Equal(StatusCode.FailedPrecondition, e.StatusCode);
     }
 
     [Fact]
@@ -51,15 +99,14 @@ public class PageTest : IClassFixture<Fixture>, IDisposable
     {
         var respCreate1 = _client.CreatePage(new()
         {
-            Name = "Akce 2021",
-            Slug = "akce-2021",
+            Slug   = "akce-2021",
+            SiteId = _siteId,
         });
 
         var respCreate2 = _client.CreatePage(new()
         {
-            Name     = "Silvestr",
             Slug     = "silvestr",
-            Content  = "Sešli jsme se...",
+            SiteId   = _siteId,
             ParentId = respCreate1.Id,
         });
 
@@ -77,6 +124,7 @@ public class PageTest : IClassFixture<Fixture>, IDisposable
             Name    = "Silvestr 2021",
             Slug    = "silvestr-2021",
             Content = "Sešli jsme se...",
+            SiteId  = _siteId,
             Role    = "event",
         });
 
@@ -108,9 +156,8 @@ public class PageTest : IClassFixture<Fixture>, IDisposable
     {
         var respCreate = _client.CreatePage(new()
         {
-            Name    = "Silvestr 2021",
-            Slug    = "silvestr-2021",
-            Content = "Sešli jsme se...",
+            Slug   = "silvestr-2021",
+            SiteId = _siteId,
         });
 
         _client.DeletePage(new() {PageId = respCreate.Id});
@@ -124,9 +171,8 @@ public class PageTest : IClassFixture<Fixture>, IDisposable
     {
         var respCreate = _client.CreatePage(new()
         {
-            Name    = "Silvestr 2021",
-            Slug    = "silvestr-2021",
-            Content = "Sešli jsme se...",
+            Slug   = "silvestr-2021",
+            SiteId = _siteId,
         });
 
         var respGet = _client.GetPageBySlug(new() {PageSlug = "silvestr-2021"});
@@ -142,24 +188,28 @@ public class PageTest : IClassFixture<Fixture>, IDisposable
             Name    = "Podzimky 2021",
             Slug    = "podzimky-2021",
             Content = "Sešli jsme se...",
+            SiteId  = _siteId,
         });
         _client.CreatePage(new()
         {
             Name    = "Silvestr 2021",
             Slug    = "silvestr-2021",
             Content = "Opět jsme se sešli...",
+            SiteId  = _siteId,
         });
         _client.CreatePage(new()
         {
             Name    = "Brdy 2022",
             Slug    = "brdy-2022",
             Content = "Byla zima.",
+            SiteId  = _siteId,
         });
 
         var resp = _client.GetPages(new());
 
         Assert.Equal(3, resp.Pages.Count);
         Assert.All(resp.Pages, p => Assert.NotNull(p.Id));
+        Assert.All(resp.Pages, p => Assert.Equal(_siteId, p.SiteId));
         Assert.Contains(resp.Pages, p => p.Name == "Podzimky 2021");
         Assert.Contains(resp.Pages, p => p.Slug == "podzimky-2021");
         Assert.Contains(resp.Pages, p => p.Content == "Sešli jsme se...");
