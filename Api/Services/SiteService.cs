@@ -42,7 +42,10 @@ public class SiteService : Service.ServiceBase
         ServerCallContext    context
     )
     {
-        var site = await _db.Sites.FirstAsync(p => p.Slug == request.SiteSlug);
+        var site = await _db.Sites.FirstOrDefaultAsync(p => p.Slug == request.SiteSlug);
+        if (site == null)
+            throw new NotFound("Site not found.");
+
         return new GetSiteBySlugResponse
         {
             Site = new Site

@@ -93,6 +93,13 @@ public class SiteTest : IClassFixture<Fixture>, IDisposable
     }
 
     [Fact]
+    public void TestGetBySlugFailsWhenSiteDoesNotExist()
+    {
+        var e = Assert.Throws<RpcException>(() => _client.GetSiteBySlug(new() {SiteSlug = "stopari"}));
+        Assert.Equal(StatusCode.NotFound, e.StatusCode);
+    }
+
+    [Fact]
     public void TestGetMany()
     {
         _client.CreateSite(new()
