@@ -18,28 +18,6 @@ public class SiteService : Service.ServiceBase
         _log = log;
     }
 
-    public override async Task<CreateSiteResponse> CreateSite(
-        CreateSiteRequest request,
-        ServerCallContext context
-    )
-    {
-        var id = Guid.NewGuid();
-
-        _db.Sites.Add(new Data.Site
-        {
-            Id   = id,
-            Name = request.Name,
-            Slug = request.Slug,
-        });
-
-        await _db.SaveChangesAsync();
-
-        return new CreateSiteResponse
-        {
-            Id = id.ToUuid(),
-        };
-    }
-
     public override async Task<GetSiteResponse> GetSite(GetSiteRequest request, ServerCallContext context)
     {
         var id = request.SiteId.ToGuid();
@@ -102,6 +80,28 @@ public class SiteService : Service.ServiceBase
         }
 
         return resp;
+    }
+
+    public override async Task<CreateSiteResponse> CreateSite(
+        CreateSiteRequest request,
+        ServerCallContext context
+    )
+    {
+        var id = Guid.NewGuid();
+
+        _db.Sites.Add(new Data.Site
+        {
+            Id   = id,
+            Name = request.Name,
+            Slug = request.Slug,
+        });
+
+        await _db.SaveChangesAsync();
+
+        return new CreateSiteResponse
+        {
+            Id = id.ToUuid(),
+        };
     }
 
     public override async Task<UpdateSiteResponse> UpdateSite(UpdateSiteRequest request, ServerCallContext context)

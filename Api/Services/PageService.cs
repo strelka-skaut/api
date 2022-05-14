@@ -19,50 +19,6 @@ public class PageService : Service.ServiceBase
         _log = log;
     }
 
-    public override async Task<CreatePageResponse> CreatePage(
-        CreatePageRequest request,
-        ServerCallContext context
-    )
-    {
-        if (request.SiteId == null)
-            throw new InvalidArgument("SiteId is required.");
-
-        var siteId = request.SiteId.ToGuid();
-        if (!await _db.Sites.AnyAsync(s => s.Id == siteId))
-            throw new FailedPrecondition($"Site {siteId} does not exist.");
-
-        Guid? parentId = null;
-        if (request.ParentId != null)
-        {
-            parentId = request.ParentId.ToGuid();
-            if (!await _db.Pages.AnyAsync(p => p.Id == parentId))
-                throw new FailedPrecondition($"Page {parentId} does not exist.");
-        }
-        // todo validation: loop, roles...
-
-        var id = Guid.NewGuid();
-
-        _db.Pages.Add(new Data.Page
-        {
-            Id            = id,
-            Name          = request.Name,
-            Slug          = request.Slug,
-            Content       = request.Content,
-            Role          = request.Role,
-            UpdatedAt     = DateTime.UtcNow,
-            UpdatedUserId = Guid.Empty, // todo
-            SiteId        = siteId,
-            ParentId      = parentId,
-        });
-
-        await _db.SaveChangesAsync();
-
-        return new CreatePageResponse
-        {
-            Id = id.ToUuid(),
-        };
-    }
-
     public override async Task<GetPageResponse> GetPage(GetPageRequest request, ServerCallContext context)
     {
         var id = request.PageId.ToGuid();
@@ -143,6 +99,50 @@ public class PageService : Service.ServiceBase
         }
 
         return resp;
+    }
+
+    public override async Task<CreatePageResponse> CreatePage(
+        CreatePageRequest request,
+        ServerCallContext context
+    )
+    {
+        if (request.SiteId == null)
+            throw new InvalidArgument("SiteId is required.");
+
+        var siteId = request.SiteId.ToGuid();
+        if (!await _db.Sites.AnyAsync(s => s.Id == siteId))
+            throw new FailedPrecondition($"Site {siteId} does not exist.");
+
+        Guid? parentId = null;
+        if (request.ParentId != null)
+        {
+            parentId = request.ParentId.ToGuid();
+            if (!await _db.Pages.AnyAsync(p => p.Id == parentId))
+                throw new FailedPrecondition($"Page {parentId} does not exist.");
+        }
+        // todo validation: loop, roles...
+
+        var id = Guid.NewGuid();
+
+        _db.Pages.Add(new Data.Page
+        {
+            Id            = id,
+            Name          = request.Name,
+            Slug          = request.Slug,
+            Content       = request.Content,
+            Role          = request.Role,
+            UpdatedAt     = DateTime.UtcNow,
+            UpdatedUserId = Guid.Empty, // todo
+            SiteId        = siteId,
+            ParentId      = parentId,
+        });
+
+        await _db.SaveChangesAsync();
+
+        return new CreatePageResponse
+        {
+            Id = id.ToUuid(),
+        };
     }
 
     public override async Task<UpdatePageResponse> UpdatePage(UpdatePageRequest request, ServerCallContext context)
