@@ -44,13 +44,18 @@ public class PageService : Service.ServiceBase
         };
     }
 
-    public override async Task<GetPageBySlugResponse> GetPageBySlug(
-        GetPageBySlugRequest request,
-        ServerCallContext    context
+    public override async Task<GetPageBySiteAndSlugResponse> GetPageBySiteAndSlug(
+        GetPageBySiteAndSlugRequest request,
+        ServerCallContext           context
     )
     {
-        var page = await _db.Pages.FirstAsync(p => p.Slug == request.PageSlug);
-        return new GetPageBySlugResponse
+        var siteId = request.SiteId.ToGuid();
+
+        var page = await _db.Pages.FirstOrDefaultAsync(p => p.SiteId == siteId && p.Slug == request.PageSlug);
+        if (page == null)
+            throw new NotFound("Page not found.");
+
+        return new GetPageBySiteAndSlugResponse
         {
             Page = new Page
             {

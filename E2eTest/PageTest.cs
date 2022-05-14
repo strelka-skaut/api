@@ -167,7 +167,7 @@ public class PageTest : IClassFixture<Fixture>, IDisposable
     }
 
     [Fact]
-    public void TestGetBySlug()
+    public void TestGetBySiteAndSlug()
     {
         var respCreate = _client.CreatePage(new()
         {
@@ -175,9 +175,18 @@ public class PageTest : IClassFixture<Fixture>, IDisposable
             SiteId = _siteId,
         });
 
-        var respGet = _client.GetPageBySlug(new() {PageSlug = "silvestr-2021"});
+        var respGet = _client.GetPageBySiteAndSlug(new() {SiteId = _siteId, PageSlug = "silvestr-2021"});
 
         Assert.Equal(respCreate.Id, respGet.Page.Id);
+    }
+
+    [Fact]
+    public void TestGetBySiteAndSlugFailsWhenPageDoesNotExist()
+    {
+        var request = new GetPageBySiteAndSlugRequest() {SiteId = _siteId, PageSlug = "silvestr-2021"};
+
+        var e = Assert.Throws<RpcException>(() => _client.GetPageBySiteAndSlug(request));
+        Assert.Equal(StatusCode.NotFound, e.StatusCode);
     }
 
     [Fact]
