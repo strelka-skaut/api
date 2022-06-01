@@ -167,7 +167,7 @@ public class PageTest : IClassFixture<Fixture>, IDisposable
     }
 
     [Fact]
-    public void TestGetBySiteAndSlug()
+    public void TestGetBySiteAndPath()
     {
         var respCreate = _client.CreatePage(new()
         {
@@ -175,17 +175,38 @@ public class PageTest : IClassFixture<Fixture>, IDisposable
             SiteId = _siteId,
         });
 
-        var respGet = _client.GetPageBySiteAndSlug(new() {SiteId = _siteId, PageSlug = "silvestr-2021"});
+        var respGet = _client.GetPageBySiteAndPath(new() {SiteId = _siteId, Path = "silvestr-2021"});
 
         Assert.Equal(respCreate.Id, respGet.Page.Id);
     }
 
     [Fact]
-    public void TestGetBySiteAndSlugFailsWhenPageDoesNotExist()
+    public void TestGetBySiteAndPathNested()
     {
-        var request = new GetPageBySiteAndSlugRequest() {SiteId = _siteId, PageSlug = "silvestr-2021"};
+        var respCreate1 = _client.CreatePage(new()
+        {
+            Slug   = "vypravy",
+            SiteId = _siteId,
+        });
 
-        var e = Assert.Throws<RpcException>(() => _client.GetPageBySiteAndSlug(request));
+        var respCreate2 = _client.CreatePage(new()
+        {
+            Slug     = "silvestr-2021",
+            SiteId   = _siteId,
+            ParentId = respCreate1.Id,
+        });
+
+        var respGet = _client.GetPageBySiteAndPath(new() {SiteId = _siteId, Path = "vypravy/silvestr-2021"});
+
+        Assert.Equal(respCreate2.Id, respGet.Page.Id);
+    }
+
+    [Fact]
+    public void TestGetBySiteAndPathFailsWhenPageDoesNotExist()
+    {
+        var request = new GetPageBySiteAndPathRequest {SiteId = _siteId, Path = "silvestr-2021"};
+
+        var e = Assert.Throws<RpcException>(() => _client.GetPageBySiteAndPath(request));
         Assert.Equal(StatusCode.NotFound, e.StatusCode);
     }
 

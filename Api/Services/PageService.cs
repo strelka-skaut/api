@@ -44,18 +44,28 @@ public class PageService : Service.ServiceBase
         };
     }
 
-    public override async Task<GetPageBySiteAndSlugResponse> GetPageBySiteAndSlug(
-        GetPageBySiteAndSlugRequest request,
+    public override async Task<GetPageBySiteAndPathResponse> GetPageBySiteAndPath(
+        GetPageBySiteAndPathRequest request,
         ServerCallContext           context
     )
     {
         var siteId = request.SiteId.ToGuid();
 
-        var page = await _db.Pages.FirstOrDefaultAsync(p => p.SiteId == siteId && p.Slug == request.PageSlug);
-        if (page == null)
-            throw new NotFound("Page not found.");
+        Data.Page? page = null;
 
-        return new GetPageBySiteAndSlugResponse
+        foreach (var part in request.Path.Trim('/').Split('/'))
+        {
+            page = await _db.Pages.FirstOrDefaultAsync(p =>
+                p.SiteId == siteId
+                && p.ParentId == (page != null ? page.Id : null)
+                && p.Slug == part
+            );
+
+            if (page == null)
+                throw new NotFound("Page not found.");
+        }
+
+        return new GetPageBySiteAndPathResponse
         {
             Page = new Page
             {

@@ -11,7 +11,7 @@
     </ItemGroup>
 
     <ItemGroup>
-        <PackageReference Include="CSharpApiClient" Version="1.0.27" />
+        <PackageReference Include="CSharpApiClient" Version="1.0.29" />
         <PackageReference Include="Google.Apis.Drive.v3" Version="1.55.0.2566" />
         <PackageReference Include="Google.Protobuf" Version="3.19.3" />
         <PackageReference Include="Grpc.Net.Client" Version="2.40.0" />
