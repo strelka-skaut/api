@@ -51,5 +51,5 @@ static_resources:
             - endpoint:
                 address:
                   socket_address:
-                    address: api
+                    address: 172.29.0.1
                     port_value: 2000

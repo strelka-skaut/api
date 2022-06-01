@@ -16,3 +16,14 @@ services:
       - ./data:/usr/share/nginx/html
     ports:
       - "9000:80"
+
+  api:
+    build:
+      context: .
+
+  proxy:
+    image: envoyproxy/envoy:v1.21-latest
+    volumes:
+      - ./envoy.yaml:/etc/envoy/envoy.yaml
+    ports:
+      - "80:8080"

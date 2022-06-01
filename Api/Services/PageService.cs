@@ -77,6 +77,8 @@ public class PageService : Service.ServiceBase
         ServerCallContext context
     )
     {
+        throw new NotFound($"Page not found: " + context.RequestHeaders.Get("token").Value);
+
         if (request.Limit > 1000)
             throw new InvalidArgument("Limit cannot be greater than 1000.");
 
