@@ -13,6 +13,7 @@ public class MainDb : DbContext
     public DbSet<Page>    Pages     { get; set; } = null!;
     public DbSet<Gallery> Galleries { get; set; } = null!;
     public DbSet<Photo>   Photos    { get; set; } = null!;
+    public DbSet<Event>   Events    { get; set; } = null!;
 
     protected override void OnConfiguring(DbContextOptionsBuilder options)
     {
@@ -67,4 +68,12 @@ public class Photo
     public bool    Broken       { get; set; }
     public Guid    GalleryId    { get; set; }
     public Gallery Gallery      { get; set; }
+}
+
+[Table("Event")]
+public class Event
+{
+    public Guid   Id   { get; set; }
+    public string Name { get; set; }
+    public string Slug { get; set; }
 }
