@@ -79,6 +79,7 @@ public class PageTest : IClassFixture<Fixture>, IDisposable
     {
         var respCreate = _client.CreatePage(new()
         {
+            Slug = "silvestr-2021",
             SiteId = _siteId,
         });
 

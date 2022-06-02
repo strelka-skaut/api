@@ -90,6 +90,9 @@ public class SiteService : Service.ServiceBase
         ServerCallContext context
     )
     {
+        if (!Validators.IsValidSlug(request.Slug))
+            throw new InvalidArgument("Invalid format of slug.");
+
         var id = Guid.NewGuid();
 
         _db.Sites.Add(new Data.Site
@@ -119,7 +122,12 @@ public class SiteService : Service.ServiceBase
             dbSite.Name = request.Name;
 
         if (request.HasSlug)
+        {
+            if (!Validators.IsValidSlug(request.Slug))
+                throw new InvalidArgument("Invalid format of slug.");
+
             dbSite.Slug = request.Slug;
+        }
 
         await _db.SaveChangesAsync();
 

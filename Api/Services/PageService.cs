@@ -137,6 +137,9 @@ public class PageService : Service.ServiceBase
         }
         // todo validation: loop, roles...
 
+        if (!Validators.IsValidSlug(request.Slug))
+            throw new InvalidArgument("Invalid format of slug.");
+
         var id = Guid.NewGuid();
 
         _db.Pages.Add(new Data.Page
@@ -172,7 +175,12 @@ public class PageService : Service.ServiceBase
             dbPage.Name = request.Name;
 
         if (request.HasSlug)
+        {
+            if (!Validators.IsValidSlug(request.Slug))
+                throw new InvalidArgument("Invalid format of slug.");
+
             dbPage.Slug = request.Slug;
+        }
 
         if (request.HasContent)
             dbPage.Content = request.Content;
