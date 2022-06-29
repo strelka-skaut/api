@@ -10,13 +10,18 @@ public class PageService : Service.ServiceBase
     private readonly Data.MainDb          _db;
     private readonly ILogger<PageService> _log;
 
+    private readonly Handler.GetPageByPath _getPageByPath;
+
     public PageService(
-        Data.MainDb          db,
-        ILogger<PageService> log
+        Data.MainDb           db,
+        ILogger<PageService>  log,
+        Handler.GetPageByPath getPageByPath
     )
     {
         _db  = db;
         _log = log;
+
+        _getPageByPath = getPageByPath;
     }
 
     public override async Task<GetPageResponse> GetPage(GetPageRequest request, ServerCallContext context)
@@ -49,35 +54,24 @@ public class PageService : Service.ServiceBase
         ServerCallContext           context
     )
     {
-        var siteId = request.SiteId.ToGuid();
+        var res = await _getPageByPath.Execute(new Handler.GetPageByPath.Query(request.Path, request.SiteId.ToGuid()));
 
-        Data.Page? page = null;
-
-        foreach (var part in request.Path.Trim('/').Split('/'))
-        {
-            page = await _db.Pages.FirstOrDefaultAsync(p =>
-                p.SiteId == siteId
-                && p.ParentId == (page != null ? page.Id : null)
-                && p.Slug == part
-            );
-
-            if (page == null)
-                throw new NotFound("Page not found.");
-        }
+        if (res.Page == null)
+            throw new NotFound("Page not found.");
 
         return new GetPageBySiteAndPathResponse
         {
             Page = new Page
             {
-                Id            = page.Id.ToUuid(),
-                Name          = page.Name,
-                Slug          = page.Slug,
-                Content       = page.Content,
-                Role          = page.Role,
-                UpdatedAt     = page.UpdatedAt.ToTimestamp(),
-                UpdatedUserId = page.UpdatedUserId.ToUuid(),
-                SiteId        = page.SiteId.ToUuid(),
-                ParentId      = page.ParentId?.ToUuid(),
+                Id            = res.Page.Id.ToUuid(),
+                Name          = res.Page.Name,
+                Slug          = res.Page.Slug,
+                Content       = res.Page.Content,
+                Role          = res.Page.Role,
+                UpdatedAt     = res.Page.UpdatedAt.ToTimestamp(),
+                UpdatedUserId = res.Page.UpdatedUserId.ToUuid(),
+                SiteId        = res.Page.SiteId.ToUuid(),
+                ParentId      = res.Page.ParentId?.ToUuid(),
             },
         };
     }

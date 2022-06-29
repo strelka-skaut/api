@@ -4,20 +4,24 @@ using ApiSpec.Grpc.Pages;
 using Grpc.Core;
 using Microsoft.EntityFrameworkCore;
 using Xunit;
+using PagesClient = ApiSpec.Grpc.Pages.Service.ServiceClient;
+using EventsClient = ApiSpec.Grpc.Events.Service.ServiceClient;
 
 namespace E2eTest;
 
 public class PageTest : IClassFixture<Fixture>, IDisposable
 {
-    private readonly MainDb                _db;
-    private readonly Service.ServiceClient _client;
+    private readonly MainDb       _db;
+    private readonly PagesClient  _pagesClient;
+    private readonly EventsClient _eventsClient;
 
     private readonly Uuid _siteId;
 
     public PageTest(Fixture fixture)
     {
-        _db     = fixture.Db;
-        _client = new Service.ServiceClient(fixture.Channel);
+        _db           = fixture.Db;
+        _pagesClient  = new PagesClient(fixture.Channel);
+        _eventsClient = new EventsClient(fixture.Channel);
 
         var siteId = Guid.NewGuid();
         _db.Sites.Add(new Site
@@ -32,6 +36,7 @@ public class PageTest : IClassFixture<Fixture>, IDisposable
 
     public void Dispose()
     {
+        _db.Database.ExecuteSqlRaw("DELETE FROM \"Event\";");
         _db.Database.ExecuteSqlRaw("DELETE FROM \"Page\";");
         _db.Database.ExecuteSqlRaw("DELETE FROM \"Site\";");
     }
@@ -39,7 +44,7 @@ public class PageTest : IClassFixture<Fixture>, IDisposable
     [Fact]
     public void TestCreateAndGet()
     {
-        var respCreate = _client.CreatePage(new()
+        var respCreate = _pagesClient.CreatePage(new()
         {
             Name    = "Silvestr 2021",
             Slug    = "silvestr-2021",
@@ -50,7 +55,7 @@ public class PageTest : IClassFixture<Fixture>, IDisposable
 
         Assert.NotNull(respCreate.Id);
 
-        var respGet = _client.GetPage(new() {PageId = respCreate.Id});
+        var respGet = _pagesClient.GetPage(new() {PageId = respCreate.Id});
 
         Assert.Equal(respCreate.Id, respGet.Page.Id);
         Assert.Equal("Silvestr 2021", respGet.Page.Name);
@@ -70,16 +75,16 @@ public class PageTest : IClassFixture<Fixture>, IDisposable
             SiteId = new Uuid {Value = "53ba52cc-0226-4093-9c43-8c873a9c11a2"},
         };
 
-        var e = Assert.Throws<RpcException>(() => _client.CreatePage(request));
+        var e = Assert.Throws<RpcException>(() => _pagesClient.CreatePage(request));
         Assert.Equal(StatusCode.FailedPrecondition, e.StatusCode);
     }
 
     [Fact]
     public void TestUpdateFailsWhenSiteDoesNotExist()
     {
-        var respCreate = _client.CreatePage(new()
+        var respCreate = _pagesClient.CreatePage(new()
         {
-            Slug = "silvestr-2021",
+            Slug   = "silvestr-2021",
             SiteId = _siteId,
         });
 
@@ -91,27 +96,27 @@ public class PageTest : IClassFixture<Fixture>, IDisposable
             SiteId = new Uuid {Value = "53ba52cc-0226-4093-9c43-8c873a9c11a2"},
         };
 
-        var e = Assert.Throws<RpcException>(() => _client.UpdatePage(updateRequest));
+        var e = Assert.Throws<RpcException>(() => _pagesClient.UpdatePage(updateRequest));
         Assert.Equal(StatusCode.FailedPrecondition, e.StatusCode);
     }
 
     [Fact]
     public void TestCreateNested()
     {
-        var respCreate1 = _client.CreatePage(new()
+        var respCreate1 = _pagesClient.CreatePage(new()
         {
             Slug   = "akce-2021",
             SiteId = _siteId,
         });
 
-        var respCreate2 = _client.CreatePage(new()
+        var respCreate2 = _pagesClient.CreatePage(new()
         {
             Slug     = "silvestr",
             SiteId   = _siteId,
             ParentId = respCreate1.Id,
         });
 
-        var respGet = _client.GetPage(new() {PageId = respCreate2.Id});
+        var respGet = _pagesClient.GetPage(new() {PageId = respCreate2.Id});
 
         Assert.Equal(respCreate2.Id, respGet.Page.Id);
         Assert.Equal(respCreate1.Id, respGet.Page.ParentId);
@@ -120,7 +125,7 @@ public class PageTest : IClassFixture<Fixture>, IDisposable
     [Fact]
     public void TestUpdate()
     {
-        var respCreate = _client.CreatePage(new()
+        var respCreate = _pagesClient.CreatePage(new()
         {
             Name    = "Silvestr 2021",
             Slug    = "silvestr-2021",
@@ -131,9 +136,9 @@ public class PageTest : IClassFixture<Fixture>, IDisposable
 
         var id = respCreate.Id;
 
-        var respGet1 = _client.GetPage(new() {PageId = id});
+        var respGet1 = _pagesClient.GetPage(new() {PageId = id});
 
-        _client.UpdatePage(new()
+        _pagesClient.UpdatePage(new()
         {
             PageId  = id,
             Name    = "Podzimky 2021",
@@ -142,7 +147,7 @@ public class PageTest : IClassFixture<Fixture>, IDisposable
             Role    = "action",
         });
 
-        var respGet2 = _client.GetPage(new() {PageId = id});
+        var respGet2 = _pagesClient.GetPage(new() {PageId = id});
 
         Assert.Equal(id, respGet2.Page.Id);
         Assert.Equal("Podzimky 2021", respGet2.Page.Name);
@@ -155,28 +160,28 @@ public class PageTest : IClassFixture<Fixture>, IDisposable
     [Fact]
     public void TestDelete()
     {
-        var respCreate = _client.CreatePage(new()
+        var respCreate = _pagesClient.CreatePage(new()
         {
             Slug   = "silvestr-2021",
             SiteId = _siteId,
         });
 
-        _client.DeletePage(new() {PageId = respCreate.Id});
+        _pagesClient.DeletePage(new() {PageId = respCreate.Id});
 
-        var e = Assert.Throws<RpcException>(() => _client.GetPage(new() {PageId = respCreate.Id}));
+        var e = Assert.Throws<RpcException>(() => _pagesClient.GetPage(new() {PageId = respCreate.Id}));
         Assert.Equal(StatusCode.NotFound, e.StatusCode);
     }
 
     [Fact]
     public void TestGetBySiteAndPath()
     {
-        var respCreate = _client.CreatePage(new()
+        var respCreate = _pagesClient.CreatePage(new()
         {
             Slug   = "silvestr-2021",
             SiteId = _siteId,
         });
 
-        var respGet = _client.GetPageBySiteAndPath(new() {SiteId = _siteId, Path = "silvestr-2021"});
+        var respGet = _pagesClient.GetPageBySiteAndPath(new() {SiteId = _siteId, Path = "silvestr-2021"});
 
         Assert.Equal(respCreate.Id, respGet.Page.Id);
     }
@@ -184,22 +189,46 @@ public class PageTest : IClassFixture<Fixture>, IDisposable
     [Fact]
     public void TestGetBySiteAndPathNested()
     {
-        var respCreate1 = _client.CreatePage(new()
+        var respCreate1 = _pagesClient.CreatePage(new()
         {
             Slug   = "vypravy",
             SiteId = _siteId,
         });
 
-        var respCreate2 = _client.CreatePage(new()
+        var respCreate2 = _pagesClient.CreatePage(new()
         {
             Slug     = "silvestr-2021",
             SiteId   = _siteId,
             ParentId = respCreate1.Id,
         });
 
-        var respGet = _client.GetPageBySiteAndPath(new() {SiteId = _siteId, Path = "vypravy/silvestr-2021"});
+        var respGet = _pagesClient.GetPageBySiteAndPath(new() {SiteId = _siteId, Path = "vypravy/silvestr-2021"});
 
         Assert.Equal(respCreate2.Id, respGet.Page.Id);
+    }
+
+    [Fact]
+    public void TestGetBySiteAndPathWithEventSlug()
+    {
+        var respCreateEventsPage = _pagesClient.CreatePage(new()
+        {
+            Slug   = "akce",
+            SiteId = _siteId,
+        });
+        var respCreateEventDetailPage = _pagesClient.CreatePage(new()
+        {
+            Slug     = "oddil-{event:slug}",
+            SiteId   = _siteId,
+            ParentId = respCreateEventsPage.Id,
+        });
+        _eventsClient.CreateEvent(new()
+        {
+            Slug = "silvestr-2021",
+        });
+
+        var respGet = _pagesClient.GetPageBySiteAndPath(new() {SiteId = _siteId, Path = "akce/oddil-silvestr-2021"});
+
+        Assert.Equal(respCreateEventDetailPage.Id, respGet.Page.Id);
     }
 
     [Fact]
@@ -207,28 +236,28 @@ public class PageTest : IClassFixture<Fixture>, IDisposable
     {
         var request = new GetPageBySiteAndPathRequest {SiteId = _siteId, Path = "silvestr-2021"};
 
-        var e = Assert.Throws<RpcException>(() => _client.GetPageBySiteAndPath(request));
+        var e = Assert.Throws<RpcException>(() => _pagesClient.GetPageBySiteAndPath(request));
         Assert.Equal(StatusCode.NotFound, e.StatusCode);
     }
 
     [Fact]
     public void TestGetMany()
     {
-        _client.CreatePage(new()
+        _pagesClient.CreatePage(new()
         {
             Name    = "Podzimky 2021",
             Slug    = "podzimky-2021",
             Content = "Sešli jsme se...",
             SiteId  = _siteId,
         });
-        _client.CreatePage(new()
+        _pagesClient.CreatePage(new()
         {
             Name    = "Silvestr 2021",
             Slug    = "silvestr-2021",
             Content = "Opět jsme se sešli...",
             SiteId  = _siteId,
         });
-        _client.CreatePage(new()
+        _pagesClient.CreatePage(new()
         {
             Name    = "Brdy 2022",
             Slug    = "brdy-2022",
@@ -236,7 +265,7 @@ public class PageTest : IClassFixture<Fixture>, IDisposable
             SiteId  = _siteId,
         });
 
-        var resp = _client.GetPages(new());
+        var resp = _pagesClient.GetPages(new());
 
         Assert.Equal(3, resp.Pages.Count);
         Assert.All(resp.Pages, p => Assert.NotNull(p.Id));

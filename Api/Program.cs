@@ -1,6 +1,7 @@
 using System.Net;
 using Api;
 using Api.Data;
+using Api.Handler;
 using Api.Services;
 using Microsoft.AspNetCore.Server.Kestrel.Core;
 using Microsoft.EntityFrameworkCore;
@@ -19,6 +20,8 @@ builder.Services.AddDbContext<MainDb>(options =>
     options.UseNpgsql(builder.Configuration["Database:NpgsqlString"]);
 });
 
+builder.Services.AddScoped(typeof(GetPageByPath));
+
 builder.Services.AddSingleton(
     _ => new GoogleApiServiceFactory(builder.Configuration["Google:ServiceAccountCredentialFile"]).CreateDriveService()
 );
@@ -26,7 +29,7 @@ builder.Services.AddSingleton(
 builder.Services.AddSingleton(_ => new MediaService.Configuration
 {
     FileCacheBasePath = builder.Configuration["FileCache:BasePath"],
-    FileCacheBaseUrl = builder.Configuration["FileCache:BaseUrl"],
+    FileCacheBaseUrl  = builder.Configuration["FileCache:BaseUrl"],
 });
 
 var app = builder.Build();
